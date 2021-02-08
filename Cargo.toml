@@ -1,0 +1,11 @@
+[package]
+name = "haiirOS"
+version = "0.1.0"
+authors = ["tempest7490"]
+edition = "2018"
+
+[lib]
+crate-type = ["staticlib"]
+
+[dependencies]
+rlibc = "1.0.0"
