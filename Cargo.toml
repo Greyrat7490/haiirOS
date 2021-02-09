@@ -1,6 +1,6 @@
 [package]
 name = "haiirOS"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["tempest7490"]
 edition = "2018"
 
@@ -9,3 +9,4 @@ crate-type = ["staticlib"]
 
 [dependencies]
 rlibc = "1.0.0"
+spin = "0.7.1"
