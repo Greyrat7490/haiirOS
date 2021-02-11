@@ -1,6 +1,6 @@
 [package]
 name = "haiirOS"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["tempest7490"]
 edition = "2018"
 

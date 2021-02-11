@@ -18,14 +18,17 @@ clean:
 
 iso: $(iso)
 
+debug: $(iso)
+	qemu-system-x86_64 -s -S $(iso)
+
 run: $(iso)
 	qemu-system-x86_64 -hda $(iso)
 
 $(iso): $(kernel) $(grub_cfg)
-	mkdir -p build/isofiles/boot/grub
-	cp $(kernel) build/isofiles/boot/$(project_name).bin
-	cp $(grub_cfg) build/isofiles/boot/grub
-	grub-mkrescue -o $(iso) build/isofiles
+	mkdir -p build/iso/boot/grub
+	cp $(kernel) build/iso/boot/$(project_name).bin
+	cp $(grub_cfg) build/iso/boot/grub
+	grub-mkrescue -o $(iso) build/iso
 
 $(kernel): cargo $(asm_obj) $(linker_script)
 	ld -n -T $(linker_script) -o $(kernel) $(asm_obj) $(rust_obj)

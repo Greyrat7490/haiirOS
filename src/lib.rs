@@ -1,5 +1,6 @@
 #![no_std]
 #![feature(lang_items)]
+#![feature(panic_info_message)]
 #![allow(non_snake_case)]
 
 use core::panic::PanicInfo;
@@ -16,7 +17,9 @@ pub extern fn kernel_main() -> ! {
 
     hBasicIO::clearConsole();
 
-    hBasicIO::printString( "Welcome to haiirOS" );
+    println!( "{} to {}", "Welcome", "haiirOS" );
+
+    panic!( "Test panic" ); 
 
     loop {}
 }
@@ -26,7 +29,21 @@ pub extern fn kernel_main() -> ! {
 extern fn eh_personality() {}
 
 #[panic_handler]
-fn panic( _info: &PanicInfo ) -> ! {
-    hBasicIO::printString( "Err: PANIC!!!!" );
+fn panic( info: &PanicInfo ) -> ! {
+    hBasicIO::setConsoleColor( AsciiColor::Black, AsciiColor::Red );
+    hBasicIO::printString( "Kernel paniced: " );
+    
+    if let Some( message ) = info.message() {
+        printf!( "'{}', ", message );
+    } else {
+        hBasicIO::printString( "no details available, " );
+    }
+
+    if let Some( location ) = info.location() {
+        printf!( "file '{}' line {}", location.file(), location.line() );
+    } else {
+        hBasicIO::printString( "file and line unknown" );
+    }
+    
     loop {}
 }

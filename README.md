@@ -7,7 +7,12 @@
 ## Support for
 
 * x86_64
-* Legacy boot (so be sure CSM is working if you have UEFI)
+* Legacy boot ( so be sure CSM is working if you have UEFI )
+
+## Debugging
+
+* press f5 in VSCode or run "gdb remote debug"
+* do not set breakpoints in panic( info: &PanicInfo )
 
 ## ToDo-List
 

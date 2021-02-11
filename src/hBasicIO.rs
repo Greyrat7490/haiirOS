@@ -1,5 +1,7 @@
 #![allow(dead_code)]
 
+use core::fmt::Arguments;
+use core::fmt::Write;
 use spin::Lazy;
 use spin::Mutex;
 
@@ -42,32 +44,49 @@ impl VGABuffer {
             b'\n' => {
                 self.x = 0;
                 self.y += 1;
+
+                if self.y >= CONSOLE_HEIGHT {
+                    self.x = 0;
+                    self.y = 0;
+                }
             },
-            c => {
+            _ => {
                 field = field << 8 | c as u16;
+                
+                if self.x >= CONSOLE_WIDTH {
+                    self.x = 0;
+                    self.y += 1;
+                }
+                
+                if self.y >= CONSOLE_HEIGHT {
+                    self.x = 0;
+                    self.y = 0;
+                }
+                
+                self.buffer[self.x + self.y * CONSOLE_WIDTH] = field;
+                
+                self.x += 1;
             }
         }
-        
-        if self.x >= CONSOLE_WIDTH {
-            self.x = 0;
-            self.y += 1;
-        }
-        
-        if self.y >= CONSOLE_HEIGHT {
-            self.x = 0;
-            self.y = 0;
-        }
-        
-        self.buffer[self.x + self.y * CONSOLE_WIDTH] = field;
-        
-        self.x += 1;
     }  
+
+    fn printString( &mut self, string: &str ) {
+        for b in string.bytes() {
+            self.printByte( b );
+        }
+    }
 
     fn setColor( &mut self, bg: AsciiColor, fg: AsciiColor ) {
         self.color = ( bg as u8 ) << 4 | fg as u8;
     }
 }
 
+impl Write for VGABuffer {
+    fn write_str( &mut self, s: &str ) -> core::fmt::Result {
+        self.printString( s );
+        Ok(())
+    }
+}
 
 static VGA_BUFFER: Lazy<Mutex<VGABuffer>> = Lazy::new( ||
     Mutex::new(
@@ -81,14 +100,16 @@ static VGA_BUFFER: Lazy<Mutex<VGABuffer>> = Lazy::new( ||
 );
 
 
-pub fn printByte( c: u8 ) {
-    VGA_BUFFER.lock().printByte( c );
+pub fn printByte( b: u8 ) {
+    VGA_BUFFER.lock().printByte( b );
+}
+
+pub fn printChar( c: char ) {
+    VGA_BUFFER.lock().printByte( c as u8 );
 }
 
 pub fn printString( string: &str ) {
-    for b in string.bytes() {
-        VGA_BUFFER.lock().printByte( b );
-    }
+    VGA_BUFFER.lock().printString( string );
 }
 
 pub fn clearConsole() {
@@ -99,4 +120,22 @@ pub fn clearConsole() {
 
 pub fn setConsoleColor( bg: AsciiColor, fg: AsciiColor ) {
     VGA_BUFFER.lock().setColor( bg, fg );
+}
+
+pub fn printfmt( args: Arguments ) {
+    VGA_BUFFER.lock().write_fmt( args ).unwrap();
+}
+
+#[macro_export]
+macro_rules! printf {
+    ( $( $args:tt )* ) => ( hBasicIO::printfmt( format_args!( $( $args )* ) ) );
+}
+
+#[macro_export]
+macro_rules! println {
+    () => ( hBasicIO::printByte( b'\n' ) );
+    ( $( $args:tt )* ) => ( 
+        printf!( $( $args )* );
+        hBasicIO::printByte( b'\n' );
+    );
 }
