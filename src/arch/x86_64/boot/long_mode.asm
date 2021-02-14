@@ -26,6 +26,7 @@ long_mode_entry:
     ; -----------------------------------------
 
     ; go to kernel ----------------------------
+    mov edi, [multiboot_info_ptr] ; first arg of kernel_main
     extern kernel_main
     call kernel_main
     ; -----------------------------------------

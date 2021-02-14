@@ -12,7 +12,7 @@
 ## Debugging
 
 * press f5 in VSCode or run "gdb remote debug"
-* do not set breakpoints in panic( info: &PanicInfo )
+* breakpoints are buggy ( breaks sometimes in memcpy )
 
 ## ToDo-List
 
