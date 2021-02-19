@@ -79,6 +79,15 @@ impl VGABuffer {
     fn setColor( &mut self, bg: AsciiColor, fg: AsciiColor ) {
         self.color = ( bg as u8 ) << 4 | fg as u8;
     }
+
+    fn clear( &mut self ) {
+        self.x = 0;
+        self.y = 0;
+
+        for _i in 0..CONSOLE_WIDTH * CONSOLE_HEIGHT {
+            self.printByte( b' ' );
+        }
+    }
 }
 
 impl Write for VGABuffer {
@@ -113,9 +122,7 @@ pub fn printString( string: &str ) {
 }
 
 pub fn clearConsole() {
-    for _i in 0..CONSOLE_WIDTH * CONSOLE_HEIGHT {
-        VGA_BUFFER.lock().printByte( b' ' );
-    }
+    VGA_BUFFER.lock().clear();
 }
 
 pub fn setConsoleColor( bg: AsciiColor, fg: AsciiColor ) {

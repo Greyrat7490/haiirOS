@@ -22,7 +22,8 @@ impl HBootInfo {
 }
 
 pub struct HMemoryInfo<'a> {
-    memory_map: &'a MemoryMapTag,
+    pub phys_offset: u64,
+    pub memory_map: &'a MemoryMapTag,
     efi_sections: ElfSectionsTag,
 
     kernel_addr: usize,
@@ -46,7 +47,7 @@ fn get_memory_map<'a>( boot_info: &'a BootInformation ) -> &'a MemoryMapTag {
 
 fn get_efi_sections( boot_info: &BootInformation ) -> ElfSectionsTag {
     boot_info.elf_sections_tag()
-        .expect("Elf-sections tag is required")
+        .expect( "Elf-sections tag is required" )
 }
 
 impl<'a> HMemoryInfo<'a> {
@@ -62,7 +63,11 @@ impl<'a> HMemoryInfo<'a> {
         let multiboot_addr = boot_info.boot_info.start_address();
         let multiboot_end = boot_info.boot_info.end_address();
 
+        let phys_offset = memory_map.all_memory_areas().nth(0).unwrap()
+            .start_address();
+
         Self { 
+            phys_offset,
             memory_map,
             efi_sections,
             kernel_addr,
@@ -72,7 +77,7 @@ impl<'a> HMemoryInfo<'a> {
         }
     }
 
-    pub fn print( self ) {
+    pub fn print( &self ) {
         println!( "kernel:\n  from {:#x} to {:#x}", self.kernel_addr, self.kernel_end );
         println!( "multiboot:\n  from {:#x} to {:#x}", self.multiboot_addr, self.multiboot_end );    
     }

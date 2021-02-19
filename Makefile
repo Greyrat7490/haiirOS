@@ -3,14 +3,14 @@ kernel := build/$(project_name).bin
 iso := build/$(project_name).iso
 
 linker_script := src/linker.ld
-asm_src := src/arch/x86_64/boot/bootloader.asm src/arch/x86_64/boot/multiboot_header.asm
+asm_src := $(wildcard src/arch/x86_64/boot/*.asm)
 grub_cfg := src/arch/x86_64/boot/grub.cfg
 
 rust_obj := target/$(project_name)-x86_64/debug/lib$(project_name).a
 asm_obj := $(patsubst src/arch/x86_64/boot/%.asm, build/obj/%.o, $(asm_src))
 
 
-all: $(kernel)
+all: $(iso)
 
 clean:
 	cargo clean
@@ -30,7 +30,7 @@ $(iso): $(kernel) $(grub_cfg)
 	cp $(grub_cfg) build/iso/boot/grub
 	grub-mkrescue -o $(iso) build/iso
 
-$(kernel): cargo $(asm_obj) $(linker_script)
+$(kernel): $(asm_obj) $(linker_script) cargo
 	ld -n -T $(linker_script) -o $(kernel) $(asm_obj) $(rust_obj)
 
 cargo:
