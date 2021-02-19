@@ -18,8 +18,19 @@
 
 * Documention
   * VGA text buffer
-* Memory maps
-* Bootloader error handling
+  * Paging
+* Interrupts
+  * Keyboard
+* Memory
+  * memory maps
+  * page table
+  * mapping
+  * frame allocator
+  * heap allocation
+* Error handling
+  * panic
+  * bootloader
+  * exceptions
 * Basic IO
   * print
   * keyboard input
