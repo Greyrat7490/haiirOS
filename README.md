@@ -11,8 +11,23 @@
 
 ## Debugging
 
-* press f5 in VSCode or run "gdb remote debug"
-* breakpoints are buggy ( breaks sometimes in memcpy )
+* press f5 in VS Code or run "Launch(remote)"
+* using vscode extension: "GDB Debugger - Beyond"
+
+## Environment
+
+* using WSL2 / Linux
+* qemu-system-x86_64 as virtual-machine
+* make for automation
+* grub-mkrescue to create grub2 multiboot iso
+* ld as linker
+* Rust nightly
+* VS Code as Editor( IDE )
+* Extensions:
+  * Debugging: GDB Debugger - Beyond ( coolchyni.beyond-debug )
+  * IntelliSense: rust-analyzer ( matklad.rust-analyzer )
+  * TOML: Better TOML ( bungcip.better-toml )
+  * Crates: crates ( serayuzgur.crates )
 
 ## ToDo-List
 

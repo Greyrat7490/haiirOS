@@ -135,7 +135,7 @@ pub fn printfmt( args: Arguments ) {
 
 #[macro_export]
 macro_rules! printf {
-    ( $( $args:tt )* ) => ( crate::IO::hBasicIO::printfmt( format_args!( $( $args )* ) ) );
+    ( $( $args:tt )* ) => ( crate::io::hBasicIO::printfmt( format_args!( $( $args )* ) ) );
 }
 
 #[macro_export]
@@ -143,6 +143,6 @@ macro_rules! println {
     () => ( hBasicIO::printByte( b'\n' ) );
     ( $( $args:tt )* ) => ( 
         printf!( $( $args )* );
-        crate::IO::hBasicIO::printByte( b'\n' );
+        crate::io::hBasicIO::printByte( b'\n' );
     );
 }

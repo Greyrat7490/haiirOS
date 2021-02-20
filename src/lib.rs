@@ -5,11 +5,12 @@
 
 extern crate rlibc;
 
-mod IO;
+mod io;
 mod memory;
 
 use core::panic::PanicInfo;
-use IO::hBasicIO::{ AsciiColor, setConsoleColor, clearConsole, printString };
+use io::hBasicIO;
+use io::hBasicIO::AsciiColor;
 use memory::hMemoryMap::{ HBootInfo, HMemoryInfo };
 use memory::hPaging::HPaging;
 use x86_64::VirtAddr;
@@ -17,8 +18,8 @@ use x86_64::VirtAddr;
 
 #[no_mangle]
 pub extern fn kernel_main( multiboot_info_ptr: usize ) -> ! {
-    setConsoleColor( AsciiColor::Black, AsciiColor::LightGray );
-    clearConsole();
+    hBasicIO::setConsoleColor( AsciiColor::Black, AsciiColor::LightGray );
+    hBasicIO::clearConsole();
     println!( "Welcome to haiirOS" );
 
     let boot_info: HBootInfo = HBootInfo::new( multiboot_info_ptr );
@@ -55,19 +56,19 @@ extern fn eh_personality() {}
 
 #[panic_handler]
 fn panic( info: &PanicInfo ) -> ! {
-    setConsoleColor( AsciiColor::Black, AsciiColor::Red );
-    printString( "Kernel paniced: " );
+    hBasicIO::setConsoleColor( AsciiColor::Black, AsciiColor::Red );
+    printf!( "Kernel paniced: " );
     
     if let Some( message ) = info.message() {
         printf!( "'{}', ", message );
     } else {
-        printString( "no details available, " );
+        printf!( "no details available, " );
     }
 
     if let Some( location ) = info.location() {
         printf!( "file '{}' line {}", location.file(), location.line() );
     } else {
-        printString( "file and line unknown" );
+        printf!( "file and line unknown" );
     }
     
     loop {}
