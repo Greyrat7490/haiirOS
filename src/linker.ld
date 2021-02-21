@@ -18,13 +18,13 @@ SECTIONS {
 							/* 0x108000 */
 	}
 	
-	.bss : {
-		*(.bss)
+	.text :	{
+		*(.text .text.*)
 		. = ALIGN(4K);
 	}
 	
-	.text :	{
-		*(.text .text.*)
+	.bss : {
+		*(.bss)
 		. = ALIGN(4K);
 	}
 

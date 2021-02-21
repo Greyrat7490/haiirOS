@@ -20,16 +20,17 @@
 ; |         2MiB + 24KiB          |   512 * 4 * 4KiB = 8MiB      |
 ; 
 ;
-;        Mapped Addresses
+;       Virtual -> Physical
 ; ------------------------------
-; |         0x0 -> 0x0         |        
+; |            0x0             |        - unmapped for testing mapping later
+; |            0xfff           |        - ....
 ; |     0xb8000 -> 0xb8000     |        - VGA-Text-Buffer
 ; |    0x100000 -> 0x100000    |        - Multiboot_header
 ; |    0x101000 -> 0x101000    |        - Paging-Tables
 ; |    0x108000 -> 0x108000    |        - Kernel, Stack, ...
 ; |    0x7fffff -> 0x7fffff    |        
 ; | -------------------------- |        - 8MiB are mapped
-; |    0x800000 -> 0x800000    |        - unmaped
+; |          0x800000          |        - unmapped
 ; |            ....            |        - ....
 ; |            ....            |        - ....
 ; ------------------------------
@@ -58,11 +59,11 @@ enable_paging:
         or eax, 11b
         mov [PDP_table], eax
 
-        ; map first 8 PD entries
+        ; map first 4 PD entries
         mov edi, PD_table
         mov ebx, PT_table
         or ebx, 11b
-        mov ecx, 8 ; loop 8 times
+        mov ecx, 4 ; loop 4 times
         .map_PD:
             mov [edi], ebx
             add ebx, 0x1000 ; PT_table size
@@ -71,9 +72,10 @@ enable_paging:
             loop .map_PD
 
         ; map all( 4 ) PT tables
+        ; leave 0x0 - 0xfff unmapped just for testing
         mov edi, PT_table
-        mov ecx, 0          ; start entry
-        mov ebx, 0          ; start physical address
+        mov ecx, 1          ; start entry
+        mov ebx, 0x1000     ; start physical address
                             ; ecx-th entry has to be ecx-th address
         or ebx, 11b         ; present + writable
         .map_PT:
