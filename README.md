@@ -1,8 +1,8 @@
 # haiirOS
 
-## My first Kernel based on Rust
+## My first Kernel based on C
 
-> Fun project to learn Rust, Assambly x86 and how Kernels work
+> Fun project to learn C, Assambly x86 and how Kernels work
 
 ## Support for
 
@@ -21,13 +21,11 @@
 * make for automation
 * grub-mkrescue to create grub2 multiboot iso
 * ld as linker
-* Rust nightly
+* gcc as c compiler
 * VS Code as Editor( IDE )
 * Extensions:
   * Debugging: GDB Debugger - Beyond ( coolchyni.beyond-debug )
-  * IntelliSense: rust-analyzer ( matklad.rust-analyzer )
-  * TOML: Better TOML ( bungcip.better-toml )
-  * Crates: crates ( serayuzgur.crates )
+  * IntelliSense: C/C++ ( ms-vscode.cpptools )
 
 ## ToDo-List
 
@@ -59,4 +57,3 @@
 ## Resources
 
 * [Main source for developing an OS](wiki.osdev.org/Main_Page)
-* [Also a great page](os.phil-opp.com/multiboot-kernel)
