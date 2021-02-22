@@ -1,5 +1,0 @@
-[unstable]
-build-std = ["core"]
-
-[build]
-target = "haiirOS-x86_64.json"

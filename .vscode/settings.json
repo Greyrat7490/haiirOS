@@ -1,4 +1,0 @@
-{
-    "rust-analyzer.cargo.target": "haiirOS-x86_64.json",
-    "rust-analyzer.checkOnSave.allTargets": false
-}

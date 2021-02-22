@@ -4,16 +4,21 @@ iso := build/$(project_name).iso
 
 linker_script := src/linker.ld
 asm_src := $(wildcard src/arch/x86_64/boot/*.asm)
+c_src := $(shell find src -name "*.c" )
 grub_cfg := src/arch/x86_64/boot/grub.cfg
 
-rust_obj := target/$(project_name)-x86_64/debug/lib$(project_name).a
-asm_obj := $(patsubst src/arch/x86_64/boot/%.asm, build/obj/%.o, $(asm_src))
+c_obj := $(patsubst src/%.c, build/obj/c/%.o, $(c_src))
+asm_obj := $(patsubst src/arch/x86_64/boot/%.asm, build/obj/asm/%.o, $(asm_src))
 
+CFLAGS := -ffreestanding -z max-page-size=0x1000 
+CFLAGS += -mno-red-zone -mno-mmx -mno-sse -mno-sse2
+CFLAGS += -std=gnu99 -O2 -Wall -Wextra -nostdlib
+
+LDFLAGS := -m elf_x86_64 -nostdlib -T $(linker_script)
 
 all: $(iso)
 
 clean:
-	cargo clean
 	rm -rf build
 
 iso: $(iso)
@@ -30,12 +35,13 @@ $(iso): $(kernel) $(grub_cfg)
 	cp $(grub_cfg) build/iso/boot/grub
 	grub-mkrescue -o $(iso) build/iso
 
-$(kernel): $(asm_obj) $(linker_script) cargo
-	ld -n -T $(linker_script) -o $(kernel) $(asm_obj) $(rust_obj)
+$(kernel): $(asm_obj) $(linker_script) $(c_obj)
+	ld $(asm_obj) $(c_obj) -o $(kernel) $(LDFLAGS)
 
-cargo:
-	cargo build
-
-build/obj/%.o: src/arch/x86_64/boot/%.asm
+build/obj/asm/%.o: src/arch/x86_64/boot/%.asm
 	mkdir -p $(shell dirname $@)
 	nasm -f elf64 $< -o $@
+
+build/obj/c/%.o: src/%.c
+	mkdir -p $(shell dirname $@)
+	gcc -c $< -o $@ $(CFLAGS) -g

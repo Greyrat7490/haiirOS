@@ -4,9 +4,8 @@
 		{
 			"label": "qemu-debug",
 			"type": "shell",
-			"command": "qemu-system-x86_64 -s -S build/haiirOS.iso",
+			"command": "make debug",
 			"isBackground": true,
-			"dependsOn": "make iso",
 			// to make vscode not wait for finishing this preLaunchTask
 			"problemMatcher": [
 				{
@@ -25,11 +24,6 @@
 					}
 				}
 			]
-		},
-		{
-			"label": "make iso",
-			"type": "shell",
-			"command": "make iso"
 		}
 	]
 }
