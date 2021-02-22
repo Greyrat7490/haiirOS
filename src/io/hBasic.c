@@ -1,4 +1,5 @@
 #include "hBasicIO.h"
+#include <stdarg.h>
 
 typedef struct 
 {
@@ -68,7 +69,7 @@ void printByte( uint8_t byte )
     }
 }
 
-void print( const char* str ) {
+void printStr( const char* str ) {
     while ( *str != '\0' )
     {
         printByte( *str );
@@ -76,12 +77,85 @@ void print( const char* str ) {
     }
 }
 
-void println( const char* str ) {
-    while ( *str != '\0' )
-    {
-        printByte( *str );
-        str++;
+void printInt( int i ) {
+    uint8_t buffer[10]; // int max = 2,147,483,647 (10 digits)
+
+    if( i < 0 ) {
+        printByte( '-' );
+        i = -i;
     }
+
+    int j = 10;
+    do {
+        buffer[--j] = ( i % 10 ) + 48;
+        i /= 10;
+    } while( i != 0 );
+
+    for ( uint8_t k = j; k < 10; k++ ) {
+        printByte( buffer[k] );
+    }
+}
+
+void printHex( int i ) {
+    char* repr = "0123456789abcdef";
+    uint8_t buffer[8]; // 2,147,483,647 = 7FFFFFF( 8 chars )
+
+    int j = 8;
+    do {
+        buffer[--j] = repr[i % 16];
+        i /= 16;
+    } while( i != 0 );
+
+    printStr( "0x" );
+    for ( uint8_t k = j; k < 8; k++ ) {
+        printByte( buffer[k] );
+    }
+}
+
+void printf( const char* fmt, ... ) {
+    va_list args;
+    va_start( args, fmt );
+
+    while ( *fmt != '\0' )
+    {
+        if ( *fmt == '%' ) {
+            fmt++;
+
+            switch ( *fmt )
+            {
+            case 's':
+                printStr( va_arg( args, char* ) );
+                break;
+            case 'd':
+                printInt( va_arg( args, int ) );
+                break;
+            case 'x':
+                printHex( va_arg( args, int ) );
+                break;
+            case 'f':
+                printStr( "no float suppport yet" );
+                break;
+            case 'c':
+                printByte( ( char )va_arg( args, int ) );
+                break;
+            default:
+                break;
+            }
+
+            fmt++;
+        } 
+        else 
+        {
+            printByte( *fmt );
+            fmt++;
+        }
+    }
+
+    va_end( args );
+}
+
+void println( const char* fmt, ... ) {
+    printf( fmt );
     printByte( '\n' );
 }
 

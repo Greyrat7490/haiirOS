@@ -10,9 +10,9 @@ grub_cfg := src/arch/x86_64/boot/grub.cfg
 c_obj := $(patsubst src/%.c, build/obj/c/%.o, $(c_src))
 asm_obj := $(patsubst src/arch/x86_64/boot/%.asm, build/obj/asm/%.o, $(asm_src))
 
-CFLAGS := -ffreestanding -z max-page-size=0x1000 
+CFLAGS := -ffreestanding -z max-page-size=0x1000
 CFLAGS += -mno-red-zone -mno-mmx -mno-sse -mno-sse2
-CFLAGS += -std=gnu99 -O2 -Wall -Wextra -nostdlib
+CFLAGS += -O2 -Wall -Wextra -nostdlib
 
 LDFLAGS := -m elf_x86_64 -nostdlib -T $(linker_script)
 

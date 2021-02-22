@@ -23,8 +23,8 @@ enum ASCII_color {
 };
 
 void clearScreen();
-void print( const char* );
-void println( const char* );
-void setColor( uint8_t bg, uint8_t fg );
+void printf( const char* fmt, ... );
+void println( const char* fmt, ... );
+void setColor( uint8_t background, uint8_t foreground );
 
 #endif
