@@ -9,7 +9,7 @@ enum ASCII_color {
     GREEN,
     CYAN,
     RED,
-    MAGENTA,
+    PURPLE,
     BROWN,
     GREY,
     DARK_GREY,
@@ -17,13 +17,14 @@ enum ASCII_color {
     LIGHT_GREEN,
     LIGHT_CYAN,
     LIGHT_RED,
-    LIGHT_MAGENTA,
+    PINK,
     YELLOW,
     WHITE,
 };
 
-struct VGA_Buffer {
-    uint16_t buffer[80][25];
-};
+void clearScreen();
+void print( const char* );
+void println( const char* );
+void setColor( uint8_t bg, uint8_t fg );
 
 #endif
