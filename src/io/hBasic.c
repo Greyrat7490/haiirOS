@@ -17,7 +17,7 @@ typedef struct
     uint8_t height;
 } Console;
 
-static VGA_Buffer* vga_buffer = ( VGA_Buffer* )0xb8000;
+static volatile VGA_Buffer* vga_buffer = ( VGA_Buffer* )0xb8000;
 static Console console = {
     0,
     0,
@@ -29,9 +29,6 @@ static Console console = {
 
 void clearScreen() 
 {
-    console.x = 0;
-    console.y = 0;
-
     uint16_t field = console.color << 8;
 
     for ( uint8_t x = 0; x < console.width; x++ )
@@ -96,18 +93,19 @@ void printInt( int i ) {
     }
 }
 
-void printHex( int i ) {
+void printHex( uint64_t i ) {
     char* repr = "0123456789abcdef";
-    uint8_t buffer[8]; // 2,147,483,647 = 7FFFFFF( 8 chars )
+    uint8_t buffer[16];
+    // uint64_t max = 18,446,744,073,709,551,615 = FFFFFFFFFFFFFFFF( 16 chars )
 
-    int j = 8;
+    int j = 16;
     do {
         buffer[--j] = repr[i % 16];
         i /= 16;
     } while( i != 0 );
 
     printStr( "0x" );
-    for ( uint8_t k = j; k < 8; k++ ) {
+    for ( uint8_t k = j; k < 16; k++ ) {
         printByte( buffer[k] );
     }
 }
@@ -130,7 +128,7 @@ void printf( const char* fmt, ... ) {
                 printInt( va_arg( args, int ) );
                 break;
             case 'x':
-                printHex( va_arg( args, int ) );
+                printHex( va_arg( args, uint64_t ) );
                 break;
             case 'f':
                 printStr( "no float suppport yet" );

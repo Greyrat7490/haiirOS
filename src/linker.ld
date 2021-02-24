@@ -4,6 +4,7 @@ SECTIONS {
 	. = 1M;
 
 	.boot : {
+		. = ALIGN(8);
 		*(.multiboot_header)
 		. = ALIGN(4K);
 
