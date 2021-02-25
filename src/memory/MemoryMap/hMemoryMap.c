@@ -20,7 +20,7 @@ hMemoryMap init_memory_map( uint64_t boot_info_addr ) {
                 multiboot_memory_map_t* mmap = mapTag->entries;
 
                 uint32_t entry_size = mapTag->entry_size;
-            
+           
                 while ( ( uint8_t* )mmap < ( uint8_t* )tag + tag->size ) {
                     printf( "addr_start: %x", mmap->addr );
                     println( " addr_end: %x", mmap->addr + mmap->len );
@@ -46,15 +46,12 @@ hMemoryMap init_memory_map( uint64_t boot_info_addr ) {
             break;
         }
 
-        tag = ( struct multiboot_tag * ) ( ( uint8_t * ) tag 
-                                       + ( ( tag->size + 7 ) & ~7 ) );
+        tag = ( struct multiboot_tag* ) ( ( uint8_t* ) tag 
+            + ( ( tag->size + 7 ) & ~7 ) ); // 8bit aligned
     }
 
-    hMemoryMap res = { 
-        .kernel_addr = kernel_addr,
-        .elf_sections = elf_sections,
-        .mapTag = mapTag 
-    };
+
+    hMemoryMap res = { kernel_addr, elf_sections, mapTag };
     return res;
 }
 

@@ -11,4 +11,23 @@ typedef short int16_t;
 typedef int int32_t;
 typedef long int64_t;
 
+enum ASCII_color {
+    BLACK,
+    BLUE,
+    GREEN,
+    CYAN,
+    RED,
+    PURPLE,
+    BROWN,
+    GREY,
+    DARK_GREY,
+    LIGHT_BLUE,
+    LIGHT_GREEN,
+    LIGHT_CYAN,
+    LIGHT_RED,
+    PINK,
+    YELLOW,
+    WHITE,
+};
+
 #endif

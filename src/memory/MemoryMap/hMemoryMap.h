@@ -1,9 +1,9 @@
 #ifndef H_MEMORY_MAP
 #define H_MEMORY_MAP
 
-#include "../types.h"
-#include "multiboot2.h"
-#include "../io/hBasicIO.h"
+#include "types.h"
+#include "io/hBasicIO.h"
+#include "memory/multiboot2.h"
 
 typedef struct {
     uint32_t kernel_addr;

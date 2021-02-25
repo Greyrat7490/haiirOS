@@ -12,7 +12,7 @@ asm_obj := $(patsubst src/arch/x86_64/boot/%.asm, build/obj/asm/%.o, $(asm_src))
 
 CFLAGS := -ffreestanding -z max-page-size=0x1000
 CFLAGS += -mno-red-zone -mno-mmx -mno-sse -mno-sse2
-CFLAGS += -O2 -Wall -Wextra -nostdlib
+CFLAGS += -O2 -Wall -Wextra -nostdlib -I src
 
 LDFLAGS := -m elf_x86_64 -nostdlib -T $(linker_script)
 

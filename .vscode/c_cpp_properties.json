@@ -1,0 +1,14 @@
+{
+    "configurations": [
+        {
+            "name": "haiirOS",
+            "includePath": [
+                "${workspaceFolder}/src/*"
+            ],
+            "defines": [],
+            "compilerPath": "/usr/bin/gcc",
+            "intelliSenseMode": "gcc-x86"
+        }
+    ],
+    "version": 4
+}

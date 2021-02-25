@@ -1,7 +1,6 @@
 #include "types.h"
 #include "io/hBasicIO.h"
-#include "memory/multiboot2.h"
-#include "memory/hMemoryMap.h"
+#include "memory/memory.h"
 
 uint32_t physical_offset = 0;
 
@@ -18,6 +17,12 @@ void kernel_main( uint64_t boot_info_addr ) {
 
     println( "" );
     print_memory_map( &mmap );
+
+    init_paging( physical_offset );
+
+    clearScreen();
+
+    showEntries( 4, 4 );
 
     for(;;){}
 }
