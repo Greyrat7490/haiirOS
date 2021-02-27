@@ -4,8 +4,8 @@
 
 
 void kernel_main( uint64_t boot_info_addr ) {
-    clearScreen();
-    setColor( BLACK, PINK );
+    clear_screen();
+    set_color( BLACK, PINK );
 
     println( "%s to %s!", "Welcome", "haiirOS" );
 
@@ -18,29 +18,13 @@ void kernel_main( uint64_t boot_info_addr ) {
 
     init_paging();
 
-    clearScreen();
+    clear_screen();
 
-    uint32_t* testAddr = 0x402a12;
-    uint16_t* testAddr2 = 0x1000;
-    uint16_t* testAddr3 = 0x1;
+    // would cause a panic, because 0x0 - 0xfff is still unmapped
+    // uint16_t* unmappedAddr = 0x10;
+    // *unmappedAddr = 13;
 
-    println( "testAddr1 virt %x -> phys %x", testAddr, to_phys( testAddr ) );
-    println( "testAddr2 virt %x -> phys %x", testAddr2, to_phys( testAddr2 ) );
-    println( "testAddr3 virt %x -> phys %x", testAddr3, to_phys( testAddr3 ) );
-    
-    println( "-------------" );
-    println( "testAddr1 val: %d ", *testAddr );
-    println( "testAddr2 val: %d ", *testAddr2 );
-    println( "testAddr3 val: %d ", *testAddr3 );
-
-    *testAddr = 13;
-    *testAddr2 = ( WHITE << 4 | BLACK ) << 8 | 'A';
-    *testAddr3 = 25234;
-
-    println( "-------------" );
-
-    println( "testAddr1 val: %d", *testAddr );
-    println( "testAddr3 val: %d", *testAddr3 );
+    test_mapping();
 
     for(;;){}
 }

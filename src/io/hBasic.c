@@ -27,7 +27,7 @@ static Console console = {
 };
 
 
-void clearScreen() 
+void clear_screen() 
 {
     uint16_t field = console.color << 8;
 
@@ -157,6 +157,6 @@ void println( const char* fmt, ... ) {
     printByte( '\n' );
 }
 
-void setColor( uint8_t bg, uint8_t fg ) {
+void set_color( uint8_t bg, uint8_t fg ) {
     console.color = bg << 4 | fg;
 }

@@ -54,23 +54,9 @@ void init_paging() {
     // PD-Table
     uint64_t pd_addr = pdp_table->pd_table & 0xfffff000;
     pd_table = ( PDTable* )pd_addr;
-
-
-    // for testing mapping 0x1000 -> 0xb8000
-                        // 0x0    -> 0x2000
-    uint64_t pt_addr = pd_table->pt_tables[0] & 0xfffff000;
-    PTTable* tmp = ( PTTable* )pt_addr;
-
-    tmp->entries[1] = 0xb8000 | 3; // writable + present
-    tmp->entries[0] = 0x2000 | 3;
-    
-    flushTLB( 0x0 );
-    flushTLB( 0x1000 );
-
-    printf("");
 }
 
-void showEntries( int ptEntries, int ptTables ) {
+void show_entries( int ptEntries, int ptTables ) {
     println( "pml4_table addr %x", pml4_table );
     println( "pdp_table addr %x", pdp_table );
     println( "pd_table addr %x", pd_table );
@@ -89,40 +75,89 @@ void showEntries( int ptEntries, int ptTables ) {
     }
 }
 
-uint8_t getLv4Index( uint64_t virt_addr ) {
+inline uint8_t get_lv4_index( uint64_t virt_addr ) {
     return ( uint8_t )( virt_addr >> 39 );
 }
 
-uint8_t getLv3Index( uint64_t virt_addr ) {
+inline uint8_t get_lv3_index( uint64_t virt_addr ) {
     return ( uint8_t )( virt_addr >> 30 );
 }
 
-uint8_t getLv2Index( uint64_t virt_addr ) { 
+inline uint8_t get_lv2_index( uint64_t virt_addr ) { 
     return ( uint8_t )( virt_addr >> 21 );
 }
 
-uint8_t getLv1Index( uint64_t virt_addr ) {
+inline uint8_t get_lv1_index( uint64_t virt_addr ) {
     return ( uint8_t )( virt_addr >> 12 );
 }
 
-uint64_t to_phys( uint64_t virt_addr ) {
-    uint8_t lv2Index = getLv2Index( virt_addr );
-    uint8_t lv1Index = getLv1Index( virt_addr );
+uint64_t* get_entry( uint64_t virt_addr ) {
+    uint8_t lv2Index = get_lv2_index( virt_addr );
+    uint8_t lv1Index = get_lv1_index( virt_addr );
 
     uint64_t pt_addr = pd_table->pt_tables[lv2Index] & 0xfffff000;
     PTTable* pt_table = ( PTTable* )pt_addr;
 
-    uint64_t res = pt_table->entries[lv1Index] & 0xfffff000;
-    res += virt_addr & 0xfff;
-    res += physical_offset;
-
-    return res;
+    return &pt_table->entries[lv1Index];
 }
 
-void flushTLB( void* m ) {
+inline uint64_t to_phys( uint64_t virt_addr ) {
+    uint64_t* entry = get_entry( virt_addr );
+
+    return ( *entry & 0xfffff000 ) + ( virt_addr & 0xfff ) + physical_offset;
+}
+
+inline void flush_TLB( void* m ) {
     __asm__ ( 
         "mov %%eax, (%0)\n"
 	    "invlpg	(%%eax)\n"
         : : "b"(m) : "memory", "eax" 
     );
+}
+
+inline void map_to( hPage page, hFrame frame, PageFlags flags ) {
+    *get_entry( *page.start_addr ) = *frame.start_addr | flags;
+
+    flush_TLB( page.start_addr );
+}
+
+// 0x1000 -> 0xb8000
+// 0x0    -> 0x2000
+void test_mapping() {
+    hFrame frame1 = get_hFrame( 0xb8000 );
+    hFrame frame2 = get_hFrame( 0x2000 );
+    
+    hPage page1 = get_hPage( 0x1000 );
+    hPage page2 = get_hPage( 0x0 );
+
+    uint16_t* testAddr1 = ( uint16_t* )0x1000;
+    uint16_t* testAddr2 = ( uint16_t* )0x10;
+
+    // invlpg in flush_TLB uses eax register( 32bit )
+    // -> clears 2x 16bit fields
+    // -> clears 'b' and 'e'
+    println( "before:( flush_TLB clears the 'be' of 'before' )" );
+    println( "testAddr1 virt %x -> phys %x", ( uint64_t )testAddr1, to_phys( *testAddr1 ) );
+    println( "testAddr2 virt %x -> phys %x", ( uint64_t )testAddr2, to_phys( *testAddr2 ) );
+
+    map_to( page1, frame1, Present | Writeable );
+    map_to( page2, frame2, Present | Writeable );
+
+    println( "after:" );
+    println( "testAddr1 virt %x -> phys %x", ( uint64_t )testAddr1, to_phys( *testAddr1 ) );
+    println( "testAddr2 virt %x -> phys %x", ( uint64_t )testAddr2, to_phys( *testAddr2 ) );
+    
+    println( "" );
+    
+    println( "before:" );
+    println( "testAddr1 val: %d ", *testAddr1 );
+    println( "testAddr2 val: %d ", *testAddr2 );
+
+    for ( uint16_t i = 6 * 80; i < 7 * 80; i++ )
+        *( testAddr1 + i ) = WHITE << 12;
+    
+    *testAddr2 = 13;
+
+    println( "after:" );
+    println( "testAddr2 val: %d", *testAddr2 );
 }
