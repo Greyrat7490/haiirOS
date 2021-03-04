@@ -5,7 +5,7 @@
 
 typedef struct
 {
-    uint64_t* start_addr;
+    uint64_t start_addr;
 } hFrame;
 
 hFrame get_hFrame( uint64_t containing_addr );

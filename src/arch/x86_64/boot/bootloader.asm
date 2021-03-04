@@ -20,6 +20,19 @@ bootloader_start:
 
 section .rodata
 
+global IST
+IST:
+	dq ist_stack1 	; IST 1, no maskable interrupt
+	dq ist_stack2 	; IST 2, double fault
+	dq 0 			; IST 3
+	dq 0 			; IST 4
+	dq 0 			; IST 5
+	dq 0 			; IST 6
+	dq 0 			; IST 7
+	dq 0 			; reserved
+	dw 0 			; reserved
+	dw 0 			; IO-map addr
+
 ; global descriptor table ( 64bit ) -------------------
 gdt64:
 .null: equ $ - gdt64    ; null descriptor
@@ -42,3 +55,9 @@ align 4096
 stack_bottom:
     resb 4096 * 16
 stack_top:
+
+
+	resb 4096
+ist_stack1:
+	resb 4096
+ist_stack2:

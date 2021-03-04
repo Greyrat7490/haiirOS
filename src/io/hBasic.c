@@ -27,8 +27,7 @@ static Console console = {
 };
 
 
-void clear_screen() 
-{
+void clear_screen() {
     uint16_t field = console.color << 8;
 
     for ( uint8_t x = 0; x < console.width; x++ )
@@ -41,20 +40,15 @@ void clear_screen()
 
 void printByte( uint8_t byte ) 
 {   
-    if ( byte == '\n' ) 
-    {
+    if ( byte == '\n' ) {
         console.x = 0;
         console.y++;
-    }
-    else 
-    {
+    } else {
         vga_buffer->buffer[console.y][console.x] = console.color << 8 | byte;
-
         console.x++;
     }
 
-    if ( console.x >= console.width )
-    {
+    if ( console.x >= console.width ) {
         console.y++;
         console.x = 0;
     }
@@ -67,8 +61,7 @@ void printByte( uint8_t byte )
 }
 
 void printStr( const char* str ) {
-    while ( *str != '\0' )
-    {
+    while ( *str != '\0' ) {
         printByte( *str );
         str++;
     }
@@ -105,17 +98,15 @@ void printHex( uint64_t i ) {
     } while( i != 0 );
 
     printStr( "0x" );
-    for ( uint8_t k = j; k < 16; k++ ) {
+    for ( uint8_t k = j; k < 16; k++ )
         printByte( buffer[k] );
-    }
 }
 
 void printf( const char* fmt, ... ) {
     va_list args;
     va_start( args, fmt );
 
-    while ( *fmt != '\0' )
-    {
+    while ( *fmt != '\0' ) {
         if ( *fmt == '%' ) {
             fmt++;
 
@@ -141,9 +132,7 @@ void printf( const char* fmt, ... ) {
             }
 
             fmt++;
-        } 
-        else 
-        {
+        } else {
             printByte( *fmt );
             fmt++;
         }

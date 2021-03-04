@@ -20,20 +20,6 @@
                 }
             ],
             "preLaunchTask": "qemu-debug"
-        },
-        {
-            "type": "by-gdb",
-            "request": "launch",
-            "name": "Launch(remote)",
-            "program": "${workspaceFolder}/build/haiirOS.bin",
-            "cwd": "${workspaceRoot}",
-            "remote": {
-                "enabled": true,
-                "address": ":1234",
-                "mode": "remote",
-                "execfile": "${workspaceFolder}/build/haiirOS.iso"
-            },
-            "preLaunchTask": "qemu-debug"
         }
     ]
 }

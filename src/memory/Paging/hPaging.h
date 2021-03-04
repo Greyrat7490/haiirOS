@@ -20,10 +20,10 @@ typedef enum {
 void init_paging();
 void show_entries( int ptEntries, int ptTables );
 
-uint8_t get_lv4_index( uint64_t virt_addr );
-uint8_t get_lv3_index( uint64_t virt_addr );
-uint8_t get_lv2_index( uint64_t virt_addr );
-uint8_t get_lv1_index( uint64_t virt_addr );
+uint16_t get_lv4_index( uint64_t virt_addr );
+uint16_t get_lv3_index( uint64_t virt_addr );
+uint16_t get_lv2_index( uint64_t virt_addr );
+uint16_t get_lv1_index( uint64_t virt_addr );
 
 uint64_t to_phys( uint64_t virt_addr );
 

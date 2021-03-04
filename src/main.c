@@ -1,6 +1,7 @@
 #include "types.h"
 #include "io/hBasicIO.h"
 #include "memory/memory.h"
+#include "interrupt/idt.h"
 
 
 void kernel_main( uint64_t boot_info_addr ) {
@@ -9,22 +10,15 @@ void kernel_main( uint64_t boot_info_addr ) {
 
     println( "%s to %s!", "Welcome", "haiirOS" );
 
-    println( "boot_info_addr: %x", boot_info_addr );
-
     hMemoryMap mmap = init_memory_map( boot_info_addr );
 
-    println( "" );
-    print_memory_map( &mmap );
-
     init_paging();
+    
+    init_idt( 0x124000 ); // IDT from 0x124000 - 0x125000
 
-    clear_screen();
+    __asm__ volatile ( "int $0x3" );
 
-    // would cause a panic, because 0x0 - 0xfff is still unmapped
-    // uint16_t* unmappedAddr = 0x10;
-    // *unmappedAddr = 13;
-
-    test_mapping();
+    //println( "%d", 13 / 0 );
 
     for(;;){}
 }
