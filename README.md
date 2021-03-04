@@ -11,8 +11,8 @@
 
 ## Debugging
 
-* press f5 in VS Code or run "Launch(remote)"
-* using vscode extension: "GDB Debugger - Beyond"
+* press f5 in VS Code or run "(gdb) Launch"
+* using vscode extension: "C/C++" ( ms-vscode.cpptools )
 
 ## Environment
 
@@ -24,8 +24,7 @@
 * gcc as c compiler
 * VS Code as Editor( IDE )
 * Extensions:
-  * Debugging: GDB Debugger - Beyond ( coolchyni.beyond-debug )
-  * IntelliSense: C/C++ ( ms-vscode.cpptools )
+  * IntelliSense / Debugging: C/C++ ( ms-vscode.cpptools )
 
 ## ToDo-List
 
