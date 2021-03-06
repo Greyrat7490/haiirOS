@@ -16,6 +16,7 @@ void kernel_main( uint64_t boot_info_addr ) {
     
     init_idt( 0x124000 ); // IDT from 0x124000 - 0x125000
 
+    // test breakpoint interrupt
     __asm__ volatile ( "int $0x3" );
 
     //println( "%d", 13 / 0 );
