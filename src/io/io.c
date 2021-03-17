@@ -1,4 +1,4 @@
-#include "hBasicIO.h"
+#include "io.h"
 #include <stdarg.h>
 
 typedef struct 
@@ -39,11 +39,11 @@ void clear_screen() {
 }
 
 void printByte( uint8_t byte ) 
-{   
-    if ( byte == '\n' ) {
+{                //LF            //CR
+    if ( byte == '\n' || byte == '\r' ) {
         console.x = 0;
         console.y++;
-    } else {
+    } else if ( byte != '\0' ) {
         vga_buffer->buffer[console.y][console.x] = console.color << 8 | byte;
         console.x++;
     }
@@ -53,8 +53,7 @@ void printByte( uint8_t byte )
         console.x = 0;
     }
 
-    if ( console.y >= console.height )
-    {
+    if ( console.y >= console.height ) {
         console.x = 0;
         console.y = 0;
     }

@@ -212,15 +212,13 @@ void exc19 ( struct interrupt_frame* frame, uint64_t err_code ) {
 void init_exceptions() {
     init_gate( 0, ( uint64_t )exc0, CODE_SEG, GATE_PRESENT | INTERRUPT_GATE, IST_NONE );
     init_gate( 1, ( uint64_t )exc1, CODE_SEG, GATE_PRESENT | INTERRUPT_GATE, IST_NONE );
-    //init_gate( 2, ( uint64_t )exc2, CODE_SEG, GATE_PRESENT | INTERRUPT_GATE, IST_NO_MASKABLE_INT );
-    init_gate( 2, ( uint64_t )exc2, CODE_SEG, GATE_PRESENT | INTERRUPT_GATE, IST_NONE );
+    init_gate( 2, ( uint64_t )exc2, CODE_SEG, GATE_PRESENT | INTERRUPT_GATE, IST_NO_MASKABLE_INT );
     init_gate( 3, ( uint64_t )exc3, CODE_SEG, GATE_PRESENT | INTERRUPT_GATE, IST_NONE );
     init_gate( 4, ( uint64_t )exc4, CODE_SEG, GATE_PRESENT | INTERRUPT_GATE, IST_NONE );
     init_gate( 5, ( uint64_t )exc5, CODE_SEG, GATE_PRESENT | INTERRUPT_GATE, IST_NONE );
     init_gate( 6, ( uint64_t )exc6, CODE_SEG, GATE_PRESENT | INTERRUPT_GATE, IST_NONE );
     init_gate( 7, ( uint64_t )exc7, CODE_SEG, GATE_PRESENT | INTERRUPT_GATE, IST_NONE );
-    //init_gate( 8, ( uint64_t )exc8, CODE_SEG, GATE_PRESENT | INTERRUPT_GATE, IST_DOUBLE_FAULT );
-    init_gate( 8, ( uint64_t )exc8, CODE_SEG, GATE_PRESENT | INTERRUPT_GATE, IST_NONE );
+    init_gate( 8, ( uint64_t )exc8, CODE_SEG, GATE_PRESENT | INTERRUPT_GATE, IST_DOUBLE_FAULT );
     init_gate( 9, ( uint64_t )exc9, CODE_SEG, GATE_PRESENT | INTERRUPT_GATE, IST_NONE );
     init_gate( 10, ( uint64_t )exc10, CODE_SEG, GATE_PRESENT | INTERRUPT_GATE, IST_NONE );
     init_gate( 11, ( uint64_t )exc11, CODE_SEG, GATE_PRESENT | INTERRUPT_GATE, IST_NONE );

@@ -12,7 +12,7 @@ asm_obj := $(patsubst src/arch/x86_64/%.asm, build/obj/asm/%.o, $(asm_src))
 
 CFLAGS := -ffreestanding -z max-page-size=0x1000 -mgeneral-regs-only
 CFLAGS += -mno-red-zone -mno-mmx -mno-sse -mno-sse2 -mno-sse3 -mno-3dnow
-CFLAGS += -O2 -Wall -Wextra -nostdlib -I src -std=gnu99
+CFLAGS += -Wall -Wextra -nostdlib -I src -std=gnu99
 
 LDFLAGS := -m elf_x86_64 -nostdlib -T $(linker_script)
 
@@ -21,13 +21,14 @@ all: $(iso)
 clean:
 	rm -rf build
 
-iso: $(iso)
+release: CFLAGS += -O2
+release: $(iso)
 
 debug: CFLAGS += -g -O0
-
 debug: $(iso)
 	qemu-system-x86_64 -s -S $(iso)
 
+run: CFLAGS += -O2
 run: $(iso)
 	qemu-system-x86_64 -hda $(iso)
 

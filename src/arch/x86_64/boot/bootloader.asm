@@ -6,6 +6,8 @@ extern long_mode_entry
 section .text
 [BITS 32]
 bootloader_start:
+    cli
+
     mov esp, stack_top
 	push ebx
 
