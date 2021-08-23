@@ -1,5 +1,6 @@
 #include "hPaging.h"
 #include "io/io.h"
+#include "types.h"
 
 typedef struct
 {
@@ -32,9 +33,9 @@ uint32_t physical_offset = 0;
 void init_paging() {
     uint64_t addr;
 
-    __asm__ (
+     __asm__ (
         "mov %%cr3, %%rax\n" // cr3 -> rax
-        "mov %%rax, %0\n"   // rax -> addr
+        "mov %%rax, %0\n"    // rax -> addr
         : "=m" ( addr )
         : // no input
         : "%rax"
@@ -63,35 +64,36 @@ void show_entries( int ptEntries, int ptTables ) {
     
     for ( int i = 0; i < ptTables; i++ ) {
         // PT-Table
-        uint64_t pt_addr = pd_table->pt_tables[i] & 0xfffff000;
-        PTTable* pt_table = ( PTTable* )pt_addr;
-        println( "pt_table[%d] addr %x", i, pt_table );
+        uint64_t entry = pd_table->pt_tables[i];
+        PTTable* pt_table = ( PTTable* )( entry & 0xfffff000 );
+        println( "pd_table[0] entry[%d] %x", i, entry );
 
         for ( int j = 0; j < ptEntries; j++ ) {
             // PT-Table Entry
-            uint64_t entry = pt_table->entries[j] & 0xfffff000;
-            println( "pt_table[%d] entry[%d] %x", i, j, entry );
+            uint64_t entry = pt_table->entries[j];
+            println( "  pt_table[%d] entry[%d] %x", i, j, entry );
         }
     }
 }
 
-inline uint16_t get_lv4_index( uint64_t virt_addr ) {
-    return ( uint16_t )( virt_addr >> 39 );
+inline uint16_t get_lv4_index( const uint64_t virt_addr ) {
+    return ( uint16_t )( ( virt_addr >> 39 ) & 0x1ff );
 }
 
-inline uint16_t get_lv3_index( uint64_t virt_addr ) {
-    return ( uint16_t )( virt_addr >> 30 );
+inline uint16_t get_lv3_index( const uint64_t virt_addr ) {
+    return ( uint16_t )( ( virt_addr >> 30 ) & 0x1ff );
 }
 
-inline uint16_t get_lv2_index( uint64_t virt_addr ) { 
-    return ( uint16_t )( virt_addr >> 21 );
+inline uint16_t get_lv2_index( const uint64_t virt_addr ) { 
+    return ( uint16_t )( ( virt_addr >> 21 ) & 0x1ff );
 }
 
-inline uint16_t get_lv1_index( uint64_t virt_addr ) {
-    return ( uint16_t )( virt_addr >> 12 );
+inline uint16_t get_lv1_index( const uint64_t virt_addr ) {
+    return ( uint16_t )( ( virt_addr >> 12 ) & 0x1ff );
 }
 
-uint64_t* get_entry( uint64_t virt_addr ) {
+// TODO: something like an optional
+uint64_t* get_entry( const uint64_t virt_addr ) {
     uint16_t i1 = get_lv1_index( virt_addr );
     uint16_t i2 = get_lv2_index( virt_addr );
     uint16_t i3 = get_lv3_index( virt_addr );
@@ -116,10 +118,10 @@ uint64_t* get_entry( uint64_t virt_addr ) {
     return &pt_table->entries[i1];
 }
 
-inline uint64_t to_phys( uint64_t virt_addr ) {
+inline uint64_t to_phys( const uint64_t virt_addr ) {
     uint64_t* entry = get_entry( virt_addr );
 
-    return ( *entry & 0xfffff000 ) + ( virt_addr & 0xfff ) + physical_offset;
+    return ( *entry & 0xfffff000 ) + ( virt_addr & 0xfff );
 }
 
 void flush_TLB( void* m ) {
@@ -134,16 +136,16 @@ void flush_TLB( void* m ) {
     // -> clears( "random" value ) 'b' and 'e'
     __asm__ ( 
         "mov %%eax, (%0)\n"
-	    "invlpg	(%%eax)\n"
+        "invlpg (%%eax)\n"
         : : "b"(m) : "memory", "eax" 
     );
 }
 
-bool is_entry_present( uint64_t* entry ) {
-    return *entry & Present;
+bool is_entry_present( const uint64_t entry ) {
+    return entry & Present;
 }
 
-inline void map_to( hPage page, hFrame frame, PageFlags flags ) {
+void map_to( const hPage page, const hFrame frame, const PageFlags flags ) {
     uint64_t* entry = get_entry( page.start_addr );
 
     if ( entry != 0x0 ) {
@@ -153,6 +155,15 @@ inline void map_to( hPage page, hFrame frame, PageFlags flags ) {
     } else {
         println( "Err: needs to allocate a new frame for a new pageTable", page.start_addr );
     }
+}
+
+bool is_addr_present( const uint64_t virt_addr ) {
+    uint64_t* entry = get_entry( virt_addr );
+    
+    if ( entry ) 
+        return is_entry_present( *entry );
+        
+    return false;
 }
 
 // 0x1000 -> 0xb8000

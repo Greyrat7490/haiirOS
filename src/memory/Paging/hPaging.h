@@ -20,14 +20,16 @@ typedef enum {
 void init_paging();
 void show_entries( int ptEntries, int ptTables );
 
-uint16_t get_lv4_index( uint64_t virt_addr );
-uint16_t get_lv3_index( uint64_t virt_addr );
-uint16_t get_lv2_index( uint64_t virt_addr );
-uint16_t get_lv1_index( uint64_t virt_addr );
+uint16_t get_lv4_index( const uint64_t virt_addr );
+uint16_t get_lv3_index( const uint64_t virt_addr );
+uint16_t get_lv2_index( const uint64_t virt_addr );
+uint16_t get_lv1_index( const uint64_t virt_addr );
 
-uint64_t to_phys( uint64_t virt_addr );
+uint64_t to_phys( const uint64_t virt_addr );
 
-void map_to( hPage page, hFrame frame, PageFlags flags );
+void map_to( const hPage page, const hFrame frame, const PageFlags flags );
+
+bool is_addr_present( const uint64_t virt_addr );
 
 void test_mapping();
 

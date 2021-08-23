@@ -1,6 +1,8 @@
 #include "irq.h"
 #include "io/io.h"
 #include "io/input.h"
+#include "interrupt/idt.h"
+#include "interrupt/ISR/isr.h"
 
 // IRQ0 handler
 __attribute__(( interrupt ))
@@ -45,23 +47,23 @@ void init_irq() {
     // remap the PIC --------------------------------------------------------
     // TODO: io_wait()
     outb( 0x20, 0x11 ); // init master PIC ( ICW2 - ICW4 )
-    outb( 0xA0, 0x11 ); // init slave PIC
+    outb( 0xa0, 0x11 ); // init slave PIC
 
     // ICW2
     outb( 0x21, 0x20 ); // set master PIC offset to 0x20
-    outb( 0xA1, 0x28 ); // set slave PIC offset to 0x28
+    outb( 0xa1, 0x28 ); // set slave PIC offset to 0x28
 
     // ICW3
     outb( 0x21, 0x04 ); // tells this PIC there is a second PIC ( at IRQ2 )
-    outb( 0xA1, 0x02 ); // tells this PIC its cascade identity
+    outb( 0xa1, 0x02 ); // tells this PIC its cascade identity
 
     // ICW4
     outb( 0x21, 0x01 ); // 8086/88 ( MCS-80/85 ) mode
-    outb( 0xA1, 0x01 ); // 8086/88 ( MCS-80/85 ) mode
+    outb( 0xa1, 0x01 ); // 8086/88 ( MCS-80/85 ) mode
 
     // set masks
     outb( 0x21, 0x00 );
-    outb( 0xA1, 0x00 );
+    outb( 0xa1, 0x00 );
     // ----------------------------------------------------------------------
 
 

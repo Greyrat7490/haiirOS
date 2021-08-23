@@ -19,7 +19,7 @@
 * using WSL2 / Linux
 * qemu-system-x86_64 as virtual-machine
 * make for automation
-* grub-mkrescue to create grub2 multiboot iso
+* grub-mkrescue to create grub2 multiboot iso ( "sudo apt install grub2 xorriso" if needed )
 * ld as linker
 * gcc as c compiler
 * VS Code as Editor( IDE )

@@ -16,8 +16,8 @@
 ; |         1x PD-Table           |   1 * 4KiB  /  4 Entries     |   
 ; |         4x PT-Table           |   4 * 4KiB  /  512 Entries   | 
 ;
-; |   Memory occupied by Tables   |       Memory mapped          |
-; |         2MiB + 24KiB          |   512 * 4 * 4KiB = 8MiB      |
+; |   Memory occupied by Tables   |         Memory mapped        |
+; |    4 * 512 * 8Byte = 16KiB    |    512 * 4 * 4KiB = 8MiB     |
 ; 
 ;
 ;       Virtual -> Physical
@@ -51,40 +51,43 @@ enable_paging:
     .prepair:
         ; map first PML4 entry
         mov eax, PDP_table
-        or eax, 11b ; present + writable
+        or eax, 111b ; present + writable + user
         mov [PML4_table], eax
 
         ; map first PDP entry
         mov eax, PD_table
-        or eax, 11b
+        or eax, 111b
         mov [PDP_table], eax
 
         ; map first 4 PD entries
         mov edi, PD_table
         mov ebx, PT_table
-        or ebx, 11b
-        mov ecx, 4 ; loop 4 times
+        mov ecx, 0          ; counter 
+        
+        or ebx, 111b
         .map_PD:
-            mov [edi], ebx
-            add ebx, 0x1000 ; PT_table size
-            add edi, 8 ; next entry( every entry has 8 byte )
+            mov [edi + ecx * 8], ebx
+            add ebx, 0x1000 ; next physical address to map( 4KiB steps )
+            
+            inc ecx
 
-            loop .map_PD
+            cmp ecx, 4
+            jne .map_PD
 
-        ; map all( 4 ) PT tables
+        ; map all 4 PT tables
         ; leave 0x0 - 0xfff unmapped just for testing
         mov edi, PT_table
         mov ecx, 1          ; start entry
         mov ebx, 0x1000     ; start physical address
                             ; ecx-th entry has to be ecx-th address
-        or ebx, 11b         ; present + writable
+        or ebx, 111b         ; present + writable + user
         .map_PT:
             mov [edi + ecx * 8], ebx
             add ebx, 0x1000     ; next physical address to map( 4KiB steps )
             
             inc ecx
 
-            cmp ecx, 512 * 4    ; 512 Entries * 4 PageTables
+            cmp ecx, 512 * 4   ; 512 Entries * 4 PageTables
             jne .map_PT
 
     ; update control registery cr0, cr3 to enable paging

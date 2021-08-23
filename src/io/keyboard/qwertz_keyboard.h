@@ -1,6 +1,8 @@
 #ifndef H_QWERTZ_KEYBOARD
 #define H_QWERTZ_KEYBOARD
 
+#include "io/input.h"
+
 static unsigned char qwertz_oem_table[13] = {
     154,    // Ü
     '#',

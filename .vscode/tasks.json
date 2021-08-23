@@ -20,7 +20,7 @@
 				  	"background": {
 						"activeOnStart": true,
 						"beginsPattern": ".",
-						"endsPattern": ".",
+						"endsPattern": "."
 					}
 				}
 			]

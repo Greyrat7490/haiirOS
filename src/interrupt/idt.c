@@ -2,6 +2,7 @@
 #include "io/io.h"
 #include "exceptions/exceptions.h"
 #include "IRQ/irq.h"
+#include "ISR/isr.h"
 
 struct IDT_descr {
     uint16_t offset1;
