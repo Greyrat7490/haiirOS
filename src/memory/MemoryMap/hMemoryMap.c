@@ -1,10 +1,12 @@
 #include "hMemoryMap.h"
+#include "io/io.h"
+#include "types.h"
 
 hMemoryMap init_memory_map( uint64_t boot_info_addr ) {
-    uint32_t kernel_addr;
-    struct multiboot_tag_mmap* mapTag;
-    struct multiboot_tag_elf_sections* elf_sections;
-
+    uint32_t kernel_addr = 0;
+    struct multiboot_tag_mmap* mapTag = 0;
+    struct multiboot_tag_elf_sections* elf_sections = 0;
+    multiboot_memory_map_t* first_entry = 0;
 
     struct multiboot_tag* tag = ( struct multiboot_tag* )( boot_info_addr + 8 );
 
@@ -17,16 +19,7 @@ hMemoryMap init_memory_map( uint64_t boot_info_addr ) {
         case MULTIBOOT_TAG_TYPE_MMAP:
             {
                 mapTag = ( struct multiboot_tag_mmap* ) tag;
-                multiboot_memory_map_t* mmap = mapTag->entries;
-
-                uint32_t entry_size = mapTag->entry_size;
-           
-                while ( ( uint8_t* )mmap < ( uint8_t* )tag + tag->size ) {
-                    printf( "addr_start: %x", mmap->addr );
-                    println( " addr_end: %x", mmap->addr + mmap->len );
-
-                    mmap = ( struct multiboot_tag_mmap* )( ( uint64_t )mmap + entry_size );
-                }
+                first_entry = mapTag->entries;
             }
             break;
         case MULTIBOOT_TAG_TYPE_ELF_SECTIONS:
@@ -51,7 +44,7 @@ hMemoryMap init_memory_map( uint64_t boot_info_addr ) {
     }
 
 
-    hMemoryMap res = { kernel_addr, elf_sections, mapTag };
+    hMemoryMap res = { kernel_addr, elf_sections, mapTag, first_entry };
     return res;
 }
 
@@ -59,4 +52,18 @@ void print_memory_map( hMemoryMap* mmap ) {
     println( "memory_map addr: %x", mmap->mapTag );
     println( "kernel addr: %x", mmap->kernel_addr );
     println( "elf_sections addr: %x", mmap->elf_sections );
+
+    multiboot_memory_map_t* entry = mmap->first_entry;
+    println("%x - %x", entry->addr, entry->addr + entry->len );
+    
+    while( ( entry = get_next_mmap_entry( mmap, entry ) ) != 0 )
+        println("%x - %x", entry->addr, entry->addr + entry->len );
+}
+
+// 0 means there is no next entry
+multiboot_memory_map_t* get_next_mmap_entry( hMemoryMap* mmap, multiboot_memory_map_t* entry ) {
+    if ( ( uint8_t* )entry < ( uint8_t* )mmap->mapTag + mmap->mapTag->size )
+        return ( multiboot_memory_map_t* )( ( uint64_t )entry + mmap->mapTag->entry_size );
+
+    return 0;    
 }

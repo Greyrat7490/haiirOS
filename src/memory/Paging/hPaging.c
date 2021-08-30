@@ -125,15 +125,9 @@ inline uint64_t to_phys( const uint64_t virt_addr ) {
 }
 
 void flush_TLB( void* m ) {
-    // just for testing -------------
-    uint32_t volatile tmp = *( uint32_t* )m; // the "random" value
-    *( volatile uint32_t* )m = 0;
-    tmp = *( uint32_t* )m;
-    // ------------------------------
-
-    // invlpg in uses eax register( 32bit )
+    // invlpg uses eax register( 32bit )
     // = 2x 16bit fields
-    // -> clears( "random" value ) 'b' and 'e'
+    // -> sets "random" value for 'b' and 'e' fields ( addr of m )
     __asm__ ( 
         "mov %%eax, (%0)\n"
         "invlpg (%%eax)\n"
@@ -153,7 +147,7 @@ void map_to( const hPage page, const hFrame frame, const PageFlags flags ) {
 
         flush_TLB( ( void* )page.start_addr );
     } else {
-        println( "Err: needs to allocate a new frame for a new pageTable", page.start_addr );
+        println( "Err: needs to allocate a new frame for a new Page Table (for %x)", page.start_addr );
     }
 }
 
@@ -182,10 +176,12 @@ void test_mapping() {
     println( "testAddr1 virt %x -> phys %x", ( uint64_t )testAddr1, to_phys( ( uint64_t )testAddr1 ) );
     println( "testAddr2 virt %x -> unmapped", ( uint64_t )testAddr2 );
     println( "testAddr1 val: %d ", *testAddr1 );
-    //println( "testAddr2 val: %d ", *testAddr2 ); // would cause an error
+    /* println( "testAddr2 val: %d ", *testAddr2 ); // would cause a page fault */
 
     map_to( page1, frame1, Present | Writeable );
     map_to( page2, frame2, Present | Writeable );
+
+    // needs to allocate a new frame to create a new PageTable
     map_to( get_hPage( 0xffffffff ), frame2, Present | Writeable );
 
     println( "after:" );
@@ -199,6 +195,6 @@ void test_mapping() {
     
     *testAddr2 = 13;
 
-    println( "after:" );
+    println( "after2:" );
     println( "testAddr2 val: %d", *testAddr2 );
 }

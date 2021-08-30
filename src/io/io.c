@@ -126,6 +126,14 @@ void printf( const char* fmt, ... ) {
             case 'c':
                 printByte( ( char )va_arg( args, int ) );
                 break;
+            case 'b':
+                {
+                    if( va_arg( args, int ) )
+                        printStr( "true" );
+                    else
+                        printStr( "false" );
+                    break;
+                }
             default:
                 break;
             }

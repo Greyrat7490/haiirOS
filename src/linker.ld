@@ -23,8 +23,6 @@ SECTIONS {
                             /* 0x108000 */
     }
 
-    . += 32K;               /* 0x108000 - 0x110000 for IDT */
-
     .text : {
         *(.text .text.*)
         . = ALIGN(4K);
