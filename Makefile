@@ -16,9 +16,9 @@ c_release_obj := $(patsubst src/%.c, build/release/obj/c/%.o, $(c_src))
 asm_debug_obj := $(patsubst src/%.asm, build/debug/obj/asm/%.o, $(asm_src))
 asm_release_obj := $(patsubst src/%.asm, build/release/obj/asm/%.o, $(asm_src))
 
-CFLAGS := -MD -ffreestanding -z max-page-size=0x1000 -mgeneral-regs-only
+CFLAGS := -MD -ffreestanding -fno-stack-protector -z max-page-size=0x1000 -mgeneral-regs-only
 CFLAGS += -mno-red-zone -mno-mmx -mno-sse -mno-sse2 -mno-sse3 -mno-3dnow
-CFLAGS += -Wall -Wextra -nostdlib -I src -std=gnu99
+CFLAGS += -Wall -Wextra -pedantic -nostdlib -Isrc -std=c11
 
 LDFLAGS := -m elf_x86_64 -nostdlib -T $(linker_script)
 
@@ -33,14 +33,15 @@ all: $(debug_iso)
 clean:
 	rm -rf build
 
-release: CFLAGS += -O2
+# TODO: O2 and 03 are not working
+release: CFLAGS += -O1
 release: $(release_iso)
 
-debug: CFLAGS += -g -O0
+debug: CFLAGS += -ggdb -O0
 debug: $(debug_iso)
 	qemu-system-x86_64 -s -S $(debug_iso)
 
-run: CFLAGS += -O2
+run: CFLAGS += -O1
 run: $(release_iso)
 	qemu-system-x86_64 -hda $(release_iso)
 
@@ -71,7 +72,7 @@ $(release_iso): $(release_kernel) $(grub_cfg)
 
 $(release_kernel): $(asm_release_obj) $(linker_script) $(c_release_obj)
 	ld $(asm_release_obj) $(c_release_obj) -o $(release_kernel) $(LDFLAGS)
-	
+
 build/release/obj/asm/%.o: src/%.asm
 	mkdir -p $(shell dirname $@)
 	nasm -f elf64 $< -o $@

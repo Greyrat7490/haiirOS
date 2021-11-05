@@ -14,32 +14,33 @@ extern void test_user_function() {
 
 extern void jump_usermode();
 
-void kernel_main( uint64_t boot_info_addr ) {
+void kernel_main(uint64_t boot_info_addr) {
     clear_screen();
-    set_color( BLACK, PINK );
+    set_color(BLACK, PINK);
 
-    println( "%s to %s!", "Welcome", "haiirOS" );
+    println("%s to %s!", "Welcome", "haiirOS");
 
     // memory --------------------------------------------
-    hMemoryMap mmap = init_memory_map( boot_info_addr );
-    
-    print_memory_map( &mmap );
-    
+    hMemoryMap mmap = init_memory_map(boot_info_addr);
+
+    print_memory_map(&mmap);
+
     init_paging();
 
-    /* clear_screen(); */
-    /* test_mapping(); */
-    
-    // test how much is mapped ( should be 8MiB )
-    bool is_present = is_addr_present( 0x7fffff );
-    bool is_present2 = is_addr_present( 0x800000 );
+    clear_screen();
 
-    println( "%x is present = %b", 0x7fffff, is_present );
-    println( "%x is present = %b", 0x800000, is_present2 );
+    // test how much is mapped (should be 8MiB)
+    println("%x is present = %b", 0x7fffff, is_addr_present(0x7fffff));
+    println("%x is present = %b", 0x800000, is_addr_present(0x800000));
+
+    test_mapping();
+
+    println("%x is present = %b", 0x7fffff, is_addr_present(0x7fffff));
+    println("%x is present = %b", 0x800000, is_addr_present(0x800000));
     // --------------------------------------------------
-    
+
     // interrupts, exceptions ---------------------------
-    select_keyboard_layout( QWERTZ_LAYOUT );
+    select_keyboard_layout(QWERTZ_LAYOUT);
     
     init_idt();
     
