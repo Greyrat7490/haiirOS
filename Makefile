@@ -33,15 +33,14 @@ all: $(debug_iso)
 clean:
 	rm -rf build
 
-# TODO: O2 and 03 are not working
-release: CFLAGS += -O1
+release: CFLAGS += -O3
 release: $(release_iso)
 
 debug: CFLAGS += -ggdb -O0
 debug: $(debug_iso)
 	qemu-system-x86_64 -s -S $(debug_iso)
 
-run: CFLAGS += -O1
+run: CFLAGS += -O3
 run: $(release_iso)
 	qemu-system-x86_64 -hda $(release_iso)
 

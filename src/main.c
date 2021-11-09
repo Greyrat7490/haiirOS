@@ -26,17 +26,6 @@ void kernel_main(uint64_t boot_info_addr) {
     print_memory_map(&mmap);
 
     init_paging();
-
-    clear_screen();
-
-    // test how much is mapped (should be 8MiB)
-    println("%x is present = %b", 0x7fffff, is_addr_present(0x7fffff));
-    println("%x is present = %b", 0x800000, is_addr_present(0x800000));
-
-    test_mapping();
-
-    println("%x is present = %b", 0x7fffff, is_addr_present(0x7fffff));
-    println("%x is present = %b", 0x800000, is_addr_present(0x800000));
     // --------------------------------------------------
 
     // interrupts, exceptions ---------------------------
@@ -50,6 +39,18 @@ void kernel_main(uint64_t boot_info_addr) {
     /* clear_screen(); */
     // --------------------------------------------------
         
+
+    clear_screen();
+    // test how much is mapped (should be 8MiB)
+    println("%x is present = %b", 0x7fffff, is_addr_present(0x7fffff));
+    println("%x is present = %b", 0x800000, is_addr_present(0x800000));
+
+    test_mapping();
+
+    println("%x is present = %b", 0x7fffff, is_addr_present(0x7fffff));
+    println("%x is present = %b", 0x800000, is_addr_present(0x800000));
+
+
     // start scheduler and go usermode ------------------ 
     init_tss();
  
