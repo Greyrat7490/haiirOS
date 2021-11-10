@@ -5,7 +5,7 @@ static uint64_t NEXT_FRAME = 0x800000;
 
 hFrame get_hFrame(uint64_t containing_addr) {
     hFrame frame = {
-        containing_addr - ( containing_addr % FRAME_SIZE )
+        containing_addr - (containing_addr % FRAME_SIZE)
     };
 
     return frame;

@@ -32,42 +32,31 @@ void kernel_main(uint64_t boot_info_addr) {
     select_keyboard_layout(QWERTZ_LAYOUT);
     
     init_idt();
-    
-    // test breakpoint interrupt
-    /* __asm__ volatile ( "int $0x3" ); */
-    
-    /* clear_screen(); */
     // --------------------------------------------------
         
-
-    clear_screen();
-    // test how much is mapped (should be 8MiB)
-    println("%x is present = %b", 0x7fffff, is_addr_present(0x7fffff));
-    println("%x is present = %b", 0x800000, is_addr_present(0x800000));
-
+    // tests --------------------------------------------
+    __asm__ ("int $0x3"); // breakpoint interrupt
     test_mapping();
-
-    println("%x is present = %b", 0x7fffff, is_addr_present(0x7fffff));
-    println("%x is present = %b", 0x800000, is_addr_present(0x800000));
+    // --------------------------------------------------
 
 
     // start scheduler and go usermode ------------------ 
     init_tss();
  
     // TODO: create paging tabels for user/task and load into cr3
-/*     hFrame test_func_frame = get_hFrame( (uint64_t)test_user_function );
- *     hPage test_func_page = get_hPage( (uint64_t)test_user_function );
- *     map_to( test_func_page, test_func_frame, Present | Writeable | User );
+/*     hFrame test_func_frame = get_hFrame((uint64_t)test_user_function);
+ *     hPage test_func_page = get_hPage((uint64_t)test_user_function);
+ *     map_to(test_func_page, test_func_frame, Present | Writeable | User);
  *
  *     // usr_stack 0x121000 - 0x11b000
  *     extern uint64_t usr_stack;
  *     println("user stack addr top: %x", usr_stack);
  *     println("user stack addr bottom: %x", usr_stack - 4096 * 6);
  *
- *     for ( int i = 0; i < 7; i++ ) {
- *         hFrame frame = get_hFrame( usr_stack - i * 0x1000 );
- *         hPage page = get_hPage( usr_stack - i * 0x1000 );
- *         map_to( page, frame, Present | Writeable | User );
+ *     for (int i = 0; i < 7; i++) {
+ *         hFrame frame = get_hFrame(usr_stack - i * 0x1000);
+ *         hPage page = get_hPage(usr_stack - i * 0x1000);
+ *         map_to(page, frame, Present | Writeable | User);
  *     } */
     // add_task();
     // start_scheduler();

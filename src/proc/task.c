@@ -6,7 +6,7 @@ extern void flush_tss();
 extern uint64_t kernel_stack;
 
 void init_tss() {
-    set_kernel_stack( kernel_stack );
+    set_kernel_stack(kernel_stack);
     flush_tss();
 }
 

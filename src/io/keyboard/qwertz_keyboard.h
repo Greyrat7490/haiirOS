@@ -3,7 +3,7 @@
 
 #include "io/input.h"
 
-static unsigned char qwertz_oem_table[13] = {
+const unsigned char qwertz_oem_table[13] = {
     154,    // Ü
     '#',
     153,    // Ö
@@ -20,7 +20,7 @@ static unsigned char qwertz_oem_table[13] = {
     '.'
 };
 
-static unsigned char qwertz_numpad_table[6] = {
+const unsigned char qwertz_numpad_table[6] = {
     '/',
     '*',
     '-',
@@ -29,8 +29,8 @@ static unsigned char qwertz_numpad_table[6] = {
     ',',
 };
 
-static enum keycode qwertz_keycodes[256] = {
-    0, // reserved
+const enum keycode qwertz_keycodes[256] = {
+    0,                  // reserved
     KEY_CODE_ESC,
     KEY_CODE_1,
     KEY_CODE_2,

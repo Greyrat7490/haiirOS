@@ -40,3 +40,4 @@ void init_tss();
 void set_kernel_stack(uint64_t stack);
 
 #endif // H_TASK
+

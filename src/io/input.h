@@ -10,7 +10,8 @@ enum keystate {
 };
 
 enum keycode {
-    // 0 - 7 so far unused ( later for mouse )
+    //TODO: for mouse
+    // 0 - 7 so far unused
 
     KEY_CODE_BACKSPACE = 8, // same as ascii
     KEY_CODE_TAB,           // same as ascii
@@ -161,8 +162,8 @@ enum keyboard_layouts {
     QWERTZ_LAYOUT
 };
 
-void select_keyboard_layout( enum keyboard_layouts layout );
+void select_keyboard_layout(enum keyboard_layouts layout);
 
-char scancode_to_ascii( uint8_t scancode );
+char scancode_to_ascii(uint8_t scancode);
 
 #endif // H_INPUT

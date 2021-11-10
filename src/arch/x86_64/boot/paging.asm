@@ -51,7 +51,7 @@ enable_paging:
     .prepair:
         ; map first PML4 entry
         mov eax, PDP_table
-        or eax, 111b ; present + writable + user
+        or eax, 111b            ; present + writable + user
         mov [PML4_table], eax
 
         ; map first PDP entry
@@ -62,12 +62,12 @@ enable_paging:
         ; map first 4 PD entries
         mov edi, PD_table
         mov ebx, PT_table
-        mov ecx, 0          ; counter 
+        mov ecx, 0              ; counter 
         
         or ebx, 111b
         .map_PD:
             mov [edi + ecx * 8], ebx
-            add ebx, 0x1000 ; next physical address to map( 4KiB steps )
+            add ebx, 0x1000     ; next physical address to map( 4KiB steps )
             
             inc ecx
 
@@ -77,17 +77,17 @@ enable_paging:
         ; map all 4 PT tables
         ; leave 0x0 - 0xfff unmapped just for testing
         mov edi, PT_table
-        mov ecx, 1          ; start entry
-        mov ebx, 0x1000     ; start physical address
-                            ; ecx-th entry has to be ecx-th address
-        or ebx, 111b         ; present + writable + user
+        mov ecx, 1              ; start entry
+        mov ebx, 0x1000         ; start physical address
+                                ; ecx-th entry has to be ecx-th address
+        or ebx, 111b            ; present + writable + user
         .map_PT:
             mov [edi + ecx * 8], ebx
             add ebx, 0x1000     ; next physical address to map( 4KiB steps )
             
             inc ecx
 
-            cmp ecx, 512 * 4   ; 512 Entries * 4 PageTables
+            cmp ecx, 512 * 4    ; 512 Entries * 4 PageTables
             jne .map_PT
 
     ; update control registery cr0, cr3 to enable paging
@@ -98,17 +98,17 @@ enable_paging:
 
         ; enable Physical Address Extension( PAE ) with cr4 register
         mov eax, cr4
-        or eax, 1 << 5 ; bit 5 is PAE-flag
+        or eax, 1 << 5          ; bit 5 is PAE-flag
         mov cr4, eax
 
         ; enable long mode in the EFER MSR( Model Specific Register )
         mov ecx, 0xc0000080
         rdmsr
-        or eax, 1 << 8 ; bit 8 is the long mode bit
+        or eax, 1 << 8          ; bit 8 is the long mode bit
         wrmsr
 
         ; enable paging with the cr0
         mov eax, cr0
-        or eax, 1 << 31 ; set bit 31 to enable paging
+        or eax, 1 << 31         ; set bit 31 to enable paging
         mov cr0, eax
     ret

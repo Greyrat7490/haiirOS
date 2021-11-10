@@ -2,7 +2,6 @@
 #define H_MEMORY_MAP
 
 #include "types.h"
-#include "io/io.h"
 #include "memory/multiboot2.h"
 
 typedef struct {
@@ -13,8 +12,8 @@ typedef struct {
 } hMemoryMap;
 
 
-hMemoryMap init_memory_map( uint64_t boot_info_addr );
-void print_memory_map( hMemoryMap* mmap );
-multiboot_memory_map_t* get_next_mmap_entry( hMemoryMap* mmap, multiboot_memory_map_t* entry );
+hMemoryMap init_memory_map(uint64_t boot_info_addr);
+void print_memory_map(hMemoryMap* mmap);
+multiboot_memory_map_t* get_next_mmap_entry(hMemoryMap* mmap, multiboot_memory_map_t* entry);
 
 #endif
