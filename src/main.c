@@ -1,12 +1,8 @@
-#include "interrupt/ISR/isr.h"
-#include "memory/MemoryMap/hMemoryMap.h"
-#include "memory/Paging/Frame/hFrame.h"
-#include "memory/Paging/hPaging.h"
-#include "proc/task.h"
-#include "types.h"
-#include "io/io.h"
 #include "memory/memory.h"
 #include "interrupt/idt.h"
+#include "proc/task.h"
+#include "io/io.h"
+#include "types.h"
 
 extern void test_user_function() {
     while(1){};
@@ -37,6 +33,8 @@ void kernel_main(uint64_t boot_info_addr) {
     // tests --------------------------------------------
     __asm__ ("int $0x3"); // breakpoint interrupt
     test_mapping();
+
+    // clear_screen();
     // --------------------------------------------------
 
 

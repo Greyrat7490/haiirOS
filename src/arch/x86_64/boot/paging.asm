@@ -54,6 +54,11 @@ enable_paging:
         or eax, 111b            ; present + writable + user
         mov [PML4_table], eax
 
+        ; map last PML4 entry to the PML4 table frame (for mapping later in C)
+        mov eax, PML4_table
+        or eax, 111b
+        mov [PML4_table + 511 * 8], eax
+
         ; map first PDP entry
         mov eax, PD_table
         or eax, 111b

@@ -19,17 +19,37 @@ typedef struct
 
 typedef struct
 {
-    uint64_t pd_table[512];
+    uint64_t pd_tables[512];
 } PDPTable;
 
 typedef struct
 {
-    uint64_t pdp_table[512];
+    uint64_t pdp_tables[512];
 } PML4Table;
 
 
 static PML4Table* pml4_table;
 
+// bits 11 - 9 are free to use in page tables and directories
+enum PageDirType {
+    PML4      = (3 << 9 ),   // _11
+    PDP       = (1 << 10),   // _10
+    PD        = (1 << 9 ),   // _01
+};
+enum PageDirError {
+    NOT_PRESENT     = (1 << 11),   // 1__   // cannot reach paging table, because a directory is not present
+    MISSING_TABLE   = (0 << 11),   // 0__   // bit 9 or 10 is set (which PageDirType)
+    ANY_ERROR       = (7 << 9 ),   // 111
+};
+
+
+static bool is_entry_valid(uint64_t* entry) {
+    return !(*entry & ANY_ERROR);
+}
+
+static bool is_entry_present(uint64_t* entry) {
+    return *entry & Present;
+}
 
 static uint16_t get_lv4_index(uint64_t virt_addr) {
     return (uint16_t) ((virt_addr >> 39) & 0x1ff);
@@ -47,30 +67,51 @@ static uint16_t get_lv1_index(uint64_t virt_addr) {
     return (uint16_t) ((virt_addr >> 12) & 0x1ff);
 }
 
-// TODO: proper optional
-// if PTTable does not exist:
-//    - returns a Dirty, Accessed and not present addr
+static void flush_TLB(void* m) {
+    // invlpg uses eax register (32bit)
+    // = 2x 16bit fields
+    // -> sets "random" values for the first two fields of the console (addr of m)
+
+    __asm__ (
+        "mov %%eax, (%0)\n"
+        "invlpg (%%eax)\n"
+        : : "b"(m) : "memory", "eax" 
+    );
+}
+
+// return false on error
+static bool get_table_from_entry(uint64_t* entry, enum PageDirType type, uint64_t** ppTable) {
+    *ppTable = (uint64_t*) (*entry & 0xfffff000);
+
+    if (!is_entry_present(entry)) {
+        // physical addr 0x0 is not allowed -> not a table
+        // or frame is not allocated
+        if ((uint64_t) *ppTable == 0 || (uint64_t) *ppTable >= get_next_frame_addr())
+            *entry |= MISSING_TABLE | type;
+        else // table exist but is not present
+            *entry |= NOT_PRESENT | type;
+
+        return false;
+    }
+
+    return true;
+}
+
 static uint64_t* get_entry_by_index(uint16_t pml4_index, uint16_t pdp_index, uint16_t pd_index, uint16_t pt_index) {
-    uint64_t pml4_entry = pml4_table->pdp_table[pml4_index];
-    if ((pml4_entry & 1) == 0) // check if entry is present
-        return (uint64_t*) (Dirty | Accessed);
+    uint64_t* pml4_entry = &pml4_table->pdp_tables[pml4_index];
+    PDPTable* pdp_table = 0x0;
+    if (!get_table_from_entry(pml4_entry, PML4, (uint64_t**) &pdp_table))
+        return pml4_entry;
 
-    PDPTable* pdp_table = (PDPTable*) (pml4_entry & 0xfffff000);
+    uint64_t* pdp_entry = &pdp_table->pd_tables[pdp_index];
+    PDTable* pd_table = 0x0;
+    if (!get_table_from_entry(pdp_entry, PDP, (uint64_t**) &pd_table))
+        return pdp_entry;
 
-
-    uint64_t pdp_entry = pdp_table->pd_table[pdp_index];
-    if ((pdp_entry & 1) == 0)
-        return (uint64_t*) (Dirty | Accessed);
-
-    PDTable* pd_table = (PDTable*) (pdp_entry & 0xfffff000);
-
-
-    uint64_t pd_entry = pd_table->pt_tables[pd_index];
-    if ((pd_entry & 1) == 0)
-        return (uint64_t*) (Dirty | Accessed);
-
-
-    PTTable* pt_table = (PTTable*) (pd_entry & 0xfffff000);
+    uint64_t* pd_entry = &pd_table->pt_tables[pd_index];
+    PTTable* pt_table = 0x0;
+    if (!get_table_from_entry(pd_entry, PD, (uint64_t**) &pt_table))
+        return pd_entry;
 
     return &pt_table->entries[pt_index];
 }
@@ -84,77 +125,40 @@ static uint64_t* get_entry(uint64_t virt_addr) {
     return get_entry_by_index(i4, i3, i2, i1);
 }
 
-static bool is_entry_valid(uint64_t* entry) {
-    return !((uint64_t) entry == (Dirty | Accessed));
+static uint64_t* create_table(uint64_t* entry, PageFlags flags) {
+    hFrame table_frame = alloc_frame();
+    *entry = table_frame.start_addr | flags;
+
+    return (uint64_t*) table_frame.start_addr;
 }
 
-static bool is_entry_present(uint64_t* entry) {
-    return *entry & Present;
-}
+// TODO. support creating tables in unmapped frames
+static void create_missing_tables(uint64_t* entry, hPage page, hFrame frame, PageFlags flags) {
+    if ((*entry & PML4) == PML4) {
+        PDPTable* pdp_table = (PDPTable*) create_table(entry, flags);
+        println("%s", "pdp table created");
 
-static void create_missing_table(uint64_t* entry, uint64_t virt_addr, PageFlags flags) {
-    hFrame frame = alloc_frame();
-
-    // set entry to table
-    *entry = frame.start_addr | flags;
-
-    // DOC:
-    // I intended to use 0x0, because the page is already unmapped
-    // and the address is usually unusable (so perfect for temporary mapping).
-    // For this reason, gcc unfortunately optimises this out in 02/O3 (causing invalid_opcode).
-    // 0x0(nullptr) is not a valid address and if you use it, it can always be optimised out.
-
-    // temporary map the frame to 0x1000 to set the table
-    map_to(get_hPage(0x1000), frame, Present | Writeable);
-
-    // set table
-    uint64_t* destAddr = (uint64_t*) 0x1000;
-    *destAddr = virt_addr | flags;
-}
-
-// virt_addr: address with missing tables
-static void create_missing_tables(uint64_t virt_addr, PageFlags flags) {
-    uint16_t i2 = get_lv2_index(virt_addr);
-    uint16_t i3 = get_lv3_index(virt_addr);
-    uint16_t i4 = get_lv4_index(virt_addr);
-
-    uint64_t* pml4_entry = &pml4_table->pdp_table[i4];
-
-    // create missing pdptable
-    if ((*pml4_entry & Present) == 0) {
-      println("TODO: implement");
-      while(1){}
-      // create_missing_table(pml4_entry, virt_addr, flags);
+        uint64_t i3 = get_lv3_index(page.start_addr);
+        entry = &pdp_table->pd_tables[i3];
+        *entry = PDP;
     }
 
-    PDPTable* pdp_table = (PDPTable*) (*pml4_entry & 0xfffff000);
-    uint64_t* pdp_entry = &pdp_table->pd_table[i3];
+    if (*entry & PDP) {
+        PDTable* pd_table = (PDTable*) create_table(entry, flags);
+        println("%s", "pd table created");
 
-    // create missing pdtable
-    if ((*pdp_entry & Present) == 0) {
-      println("TODO: implement");
-      while(1){}
-      // create_missing_table(pdp_entry, virt_addr, flags);
+        uint64_t i2 = get_lv2_index(page.start_addr);
+        entry = &pd_table->pt_tables[i2];
+        *entry = PD;
     }
 
-    PDTable* pd_table = (PDTable*)(*pdp_entry & 0xfffff000);
-    uint64_t* pd_entry = &pd_table->pt_tables[i2];
+    if (*entry & PD) {
+        PTTable* pt_table = (PTTable*) create_table(entry, flags);
+        println("%s", "pt table created");
 
-    // create missing pttable
-    if ((*pd_entry & Present) == 0)
-      create_missing_table(pd_entry, virt_addr, flags);
-}
-
-static void flush_TLB(void* m) {
-    // invlpg uses eax register (32bit)
-    // = 2x 16bit fields
-    // -> sets "random" values for the first two fields of the console (addr of m)
-
-    __asm__ (
-        "mov %%eax, (%0)\n"
-        "invlpg (%%eax)\n"
-        : : "b"(m) : "memory", "eax" 
-    );
+        uint64_t i1 = get_lv1_index(page.start_addr);
+        pt_table->entries[i1] = frame.start_addr | flags;
+    }
 }
 
 
@@ -171,24 +175,24 @@ void init_paging() {
 
     println("pml4 addr: %x", addr);
 
-    pml4_table = (PML4Table*)addr;
+    pml4_table = (PML4Table*) addr;
 }
 
-// TODO: proper optinal instead of returning 0xdeadbeef if virt_addr is not valid
+// 0x0 (nullptr) if no valid and/or present entry exists
 uint64_t to_phys(uint64_t virt_addr) {
     uint64_t* entry = get_entry(virt_addr);
 
     if (!is_entry_valid(entry)) {
         println("virt_addr (%x) is not valid (has no entry)", virt_addr);
-        return 0xdeadbeef;
+        return 0x0;
     }
 
     if (!is_entry_present(entry)) {
         println("virt_addr(%x) is not present", virt_addr);
-        return 0xdeadbeef;
+        return 0x0;
     }
 
-    return (*entry & 0xfffff000) + (virt_addr & 0xfff);
+    return (*entry & ~((uint64_t)0xfff)) + (virt_addr & 0xfff);
 }
 
 void map_to(hPage page, hFrame frame, PageFlags flags) {
@@ -199,8 +203,13 @@ void map_to(hPage page, hFrame frame, PageFlags flags) {
 
         flush_TLB((void*) page.start_addr);
     } else {
-        create_missing_tables(page.start_addr, flags);
-        println("New frame allocated for a new Page Table (for %x)", page.start_addr);
+        if (!(*entry & NOT_PRESENT)) { // MISSING_TABLE
+            create_missing_tables(entry, page, frame, flags);
+            flush_TLB((void*) page.start_addr);
+            return;
+        }
+
+        println("A Page directory is not present -> could not get pt entry");
     }
 }
 
@@ -229,50 +238,55 @@ void show_entries(uint16_t ptEntries, uint16_t ptTables) {
 
 // virt         -> phys
 // 0x2000       -> 0xb8000
-// 0x800000     -> 0x2000
+// 0x800000     -> 0x3000
+// 0xfffffff000 -> 0xffffff
 void test_mapping() {
     clear_screen();
     println("**<- flush_TLB clears the first two fields (first 32bit) of the console");
-    
+
     // test how much is mapped (should be 8MiB)
     println("%x is present = %b", 0x7fffff, is_addr_present(0x7fffff));
     println("%x is present = %b", 0x800000, is_addr_present(0x800000));
 
 
     hFrame frame1 = get_hFrame(0xb8000);
-    hFrame frame2 = get_hFrame(0x2000);
+    hFrame frame2 = get_hFrame(0x3000);
+    hFrame frame3 = get_hFrame(0xffffff);
 
     hPage page1 = get_hPage(0x2000);
     hPage page2 = get_hPage(0x800000);
+    hPage page3 = get_hPage(0xfffffff000);
 
     uint16_t* testAddr1 = (uint16_t*) 0x2000;
     uint16_t* testAddr2 = (uint16_t*) 0x800010;
+    uint64_t* testAddr3 = (uint64_t*) 0xfffffffff0;
 
     println("before:");
-    println("testAddr1 virt %x -> phys %x", (uint64_t) testAddr1, to_phys((uint64_t) testAddr1));
-    println("testAddr2 virt %x -> phys %x", (uint64_t) testAddr2, to_phys((uint64_t) testAddr2));
-    println("testAddr1 val: %d ", *testAddr1);
+    // println("testAddr1 virt %x -> phys %x", (uint64_t) testAddr1, to_phys((uint64_t) testAddr1));
+    // println("testAddr2 virt %x -> phys %x", (uint64_t) testAddr2, to_phys((uint64_t) testAddr2));
+    println("testAddr3 virt %x -> phys %x", (uint64_t) testAddr3, to_phys((uint64_t) testAddr3));
+    // println("testAddr1 val: %d ", *testAddr1);
     println("*testAddr2 would cause a page fault");
 
     map_to(page1, frame1, Present | Writeable);
     map_to(page2, frame2, Present | Writeable); // needs to allocate a new frame for a new PageTable
+    map_to(page3, frame3, Present | Writeable); // needs to allocated several new frames
 
     println("after:");
     println("testAddr1 virt %x -> phys %x", (uint64_t) testAddr1, to_phys((uint64_t) testAddr1));
     println("testAddr2 virt %x -> phys %x", (uint64_t) testAddr2, to_phys((uint64_t) testAddr2));
-    println("testAddr1 val: %d ", *testAddr1);
-    println("testAddr2 val: %d ", *testAddr2);
+    println("testAddr3 virt %x -> phys %x", (uint64_t) testAddr3, to_phys((uint64_t) testAddr3));
 
     for (uint16_t i = 24 * 80; i < 25 * 80; i++)
         *(testAddr1 + i) = WHITE << 12;
 
-    *testAddr2 = 13;
+    *testAddr3 = 86;
 
-    println("after '*testAddr2 = 13':");
-    println("testAddr2 val: %d", *testAddr2);
+    println("after '*testAddr3 = 86':");
+    println("testAddr3 val: %d", *testAddr3);
 
 
-    println("%x is present = %b", 0x7fffff, is_addr_present(0x7fffff));
     println("%x is present = %b", 0x800000, is_addr_present(0x800000));
+    println("%x is present = %b", 0xfffffff000, is_addr_present(0xfffffff000));
 }
 

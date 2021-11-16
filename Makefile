@@ -23,9 +23,6 @@ CFLAGS += -Wall -Wextra -pedantic -nostdlib -Isrc -std=c11
 LDFLAGS := -m elf_x86_64 -nostdlib -T $(linker_script)
 
 
--include $(c_debug_obj:.o=.d)
--include $(c_release_obj:.o=.d)
-
 .PHONY: all clean run release debug
 
 all: $(debug_iso)
@@ -79,3 +76,7 @@ build/release/obj/asm/%.o: src/%.asm
 build/release/obj/c/%.o: src/%.c
 	mkdir -p $(shell dirname $@)
 	gcc -c $< -o $@ $(CFLAGS)
+
+
+-include $(c_debug_obj:.o=.d)
+-include $(c_release_obj:.o=.d)
