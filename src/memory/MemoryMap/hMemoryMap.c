@@ -53,17 +53,30 @@ void print_memory_map(hMemoryMap* mmap) {
     println("kernel addr: %x", mmap->kernel_addr);
     println("elf_sections addr: %x", mmap->elf_sections);
 
+    uint64_t size = 0;
     multiboot_memory_map_t* entry = mmap->first_entry;
-    println("%x - %x", entry->addr, entry->addr + entry->len);
-    
-    while ((entry = get_next_mmap_entry(mmap, entry)) != 0)
-        println("%x - %x", entry->addr, entry->addr + entry->len);
+    do {
+        printf("%x - %x", entry->addr, entry->addr + entry->len);
+
+        if (entry->type == MULTIBOOT_MEMORY_RESERVED)
+            println(" (reserved)");
+        else if(entry->type == MULTIBOOT_MEMORY_AVAILABLE) {
+            size += entry->len;
+            println(" (available)");
+        } else
+            println(" (type %d)", entry->type);
+
+    } while ((entry = get_next_mmap_entry(mmap, entry)) != 0);
+
+    println("Memory size available: %x", size);
 }
 
 // 0 means there is no next entry
 multiboot_memory_map_t* get_next_mmap_entry(hMemoryMap* mmap, multiboot_memory_map_t* entry) {
-    if ((uint8_t*) entry < (uint8_t*) mmap->mapTag + mmap->mapTag->size)
-        return (multiboot_memory_map_t*) ((uint64_t) entry + mmap->mapTag->entry_size);
+    multiboot_memory_map_t* next = (multiboot_memory_map_t*) ((uint64_t) entry + mmap->mapTag->entry_size);
+
+    if ((uint8_t*) next < (uint8_t*) mmap->mapTag + mmap->mapTag->size)
+        return next;
 
     return (multiboot_memory_map_t*)0x0;
 }
