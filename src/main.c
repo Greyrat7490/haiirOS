@@ -26,12 +26,13 @@ void kernel_main(uint64_t boot_info_addr) {
 
     // interrupts, exceptions ---------------------------
     select_keyboard_layout(QWERTZ_LAYOUT);
-    
+
     init_idt();
     // --------------------------------------------------
-        
+
     // tests --------------------------------------------
-    __asm__ ("int $0x3"); // breakpoint interrupt
+    // __asm__ ("int $0x3"); // breakpoint interrupt
+
     test_mapping();
 
     // clear_screen();
@@ -40,7 +41,7 @@ void kernel_main(uint64_t boot_info_addr) {
 
     // start scheduler and go usermode ------------------ 
     init_tss();
- 
+
     // TODO: create paging tabels for user/task and load into cr3
 /*     hFrame test_func_frame = get_hFrame((uint64_t)test_user_function);
  *     hPage test_func_page = get_hPage((uint64_t)test_user_function);
@@ -58,11 +59,11 @@ void kernel_main(uint64_t boot_info_addr) {
  *     } */
     // add_task();
     // start_scheduler();
-    
+
     println("going into user mode...");
     jump_usermode();
     // --------------------------------------------------
-    
+
     // should never get reached
     while(1) __asm__("hlt");
 }
