@@ -71,9 +71,6 @@ tss_pointer: dq TSS64
 global kernel_stack
 kernel_stack: dq stack_top
 
-global usr_stack
-usr_stack: dq test_stack_top
-
 ; global descriptor table ( 64bit ) -------------------
 align 16
 global gdt64
@@ -135,10 +132,3 @@ stack_top:
 ist_stack1:
     resb 4096
 ist_stack2:
-
-
-global test_stack_top
-test_stack_bottom:
-    resb 4096 * 6
-test_stack_top:
-    resb 4096 * 6

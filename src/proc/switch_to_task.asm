@@ -5,10 +5,6 @@ section .text
 global jump_usermode
 global flush_tss
 
-extern test_user_function
-extern test_stack_top
-
-
 ; GDT_KERNEL_NULL 0x0
 ; GDT_KERNEL_CODE 0x8
 ; GDT_KERNEL_DATA 0x10
@@ -23,9 +19,12 @@ flush_tss:
     ltr ax
     ret
 
+; rdi (1st arg) user_stack_top
+; rsi (2st arg) user_function
 jump_usermode:
     cli
-    mov rcx, 0xc0000080                 
+
+    mov rcx, 0xc0000080
     rdmsr
     or eax, 1                           ; enable sysret/syscall
     wrmsr
@@ -36,7 +35,8 @@ jump_usermode:
                                         ; sysret: cs = 0x18 + 0x10, ss = 0x18 + 0x8
                                         ; syscall: cs = 0x8, ss = 0x8 + 0x8
 
-    mov rcx, test_user_function         ; rcx will be loaded into RIP
-    mov rsp, test_stack_top             ; set user stack pointer
+    mov rcx, rsi                        ; rcx will be loaded into RIP
+    mov rsp, rdi                        ; set user stack pointer
+
     mov r11, 0x200                      ; r11 will be loaded into RFLAGS, 0x200 to enable interrupt
     o64 sysret                          ; o64 to keep in long mode

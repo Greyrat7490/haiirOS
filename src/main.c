@@ -8,7 +8,8 @@ extern void test_user_function() {
     while(1){};
 }
 
-extern void jump_usermode();
+extern void jump_usermode(uint64_t usr_stack_top, uint64_t usr_func_addr);
+
 
 void kernel_main(uint64_t boot_info_addr) {
     clear_screen();
@@ -31,37 +32,40 @@ void kernel_main(uint64_t boot_info_addr) {
     // --------------------------------------------------
 
     // tests --------------------------------------------
-    // __asm__ ("int $0x3"); // breakpoint interrupt
+    __asm__ ("int $0x3"); // breakpoint interrupt
 
     test_mapping();
 
-    // clear_screen();
+    clear_screen();
     // --------------------------------------------------
 
 
-    // start scheduler and go usermode ------------------ 
+    // start scheduler and go usermode ------------------
     init_tss();
 
     // TODO: create paging tabels for user/task and load into cr3
-/*     hFrame test_func_frame = get_hFrame((uint64_t)test_user_function);
- *     hPage test_func_page = get_hPage((uint64_t)test_user_function);
- *     map_to(test_func_page, test_func_frame, Present | Writeable | User);
- *
- *     // usr_stack 0x121000 - 0x11b000
- *     extern uint64_t usr_stack;
- *     println("user stack addr top: %x", usr_stack);
- *     println("user stack addr bottom: %x", usr_stack - 4096 * 6);
- *
- *     for (int i = 0; i < 7; i++) {
- *         hFrame frame = get_hFrame(usr_stack - i * 0x1000);
- *         hPage page = get_hPage(usr_stack - i * 0x1000);
- *         map_to(page, frame, Present | Writeable | User);
- *     } */
     // add_task();
     // start_scheduler();
 
+    // map stack
+    uint64_t user_stack_top = 0x1000000f000;
+    for (int i = 0; i < 7; i++) {
+        hFrame frame = alloc_frame();
+        hPage page = get_hPage(user_stack_top - i * 0x1000);
+        map_to(page, frame, Present | Writeable | User);
+    }
+
+    // map test_user_function
+    uint64_t user_func_addr = 0x10000000000 + ((uint64_t) &test_user_function & 0xfff);
+    hFrame frame = get_hFrame((uint64_t) &test_user_function);
+    hPage page = get_hPage(user_func_addr);
+    map_to(page, frame, Present | Writeable | User);
+
+    println("virtual user_func_addr: %x", user_func_addr);
+
+
     println("going into user mode...");
-    jump_usermode();
+    jump_usermode(user_stack_top, user_func_addr);
     // --------------------------------------------------
 
     // should never get reached

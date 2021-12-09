@@ -37,8 +37,7 @@ debug: CFLAGS += -ggdb -O0
 debug: $(debug_iso)
 	qemu-system-x86_64 -s -S $(debug_iso)
 
-run: CFLAGS += -O3
-run: $(release_iso)
+run: release
 	qemu-system-x86_64 -hda $(release_iso)
 
 # debug --------------------------------------------------

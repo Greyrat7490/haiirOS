@@ -101,22 +101,28 @@ static uint64_t* get_temp_entry() {
 }
 
 static uint64_t* tmp_map(uint64_t phys_addr) {
-    uint64_t* dest_addr = (uint64_t*) (0x400000 + (phys_addr & 0xfff));
     uint64_t* tmp_entry = get_temp_entry();
 
     hFrame frame = get_hFrame(phys_addr);
     *tmp_entry = frame.start_addr | Present | Writeable;
 
     flush_TLB((void*) 0x400000);
-    return dest_addr;
+    return (uint64_t*) (0x400000 + (phys_addr & 0xfff));
 }
 
-// return false on error
-static bool get_table_from_entry(uint64_t* entry, enum PageDirType type, uint64_t** ppTable) {
+// if pointer is not derefrenceable it will
+// return a pointer with a temporary mapped virtual address
+static void* valid_pointer(void* pointer) {
     // temporary way to check if an address is derefrenceable
     // without causing a page fault if not
-    if ((uint64_t) entry >= 0x800000)
-        entry = tmp_map((uint64_t) entry);
+    if ((uint64_t) pointer >= 0x800000)
+        return tmp_map((uint64_t) pointer);
+
+    return pointer;
+}
+
+static bool get_table_from_entry(uint64_t* entry, enum PageDirType type, uint64_t** ppTable) {
+    entry = (uint64_t*) valid_pointer(entry);
 
     *ppTable = (uint64_t*) (*entry & 0xfffff000);
     if (!is_entry_present(entry)) {
@@ -138,23 +144,19 @@ static uint64_t* get_entry_by_index(uint16_t pml4_index, uint16_t pdp_index, uin
     uint64_t* pml4_entry = &pml4_table->pdp_tables[pml4_index];
     PDPTable* pdp_table = 0x0;
     if (!get_table_from_entry(pml4_entry, PML4, (uint64_t**) &pdp_table))
-        return pml4_entry;
+        return (uint64_t*) pml4_entry;
 
     uint64_t* pdp_entry = &pdp_table->pd_tables[pdp_index];
     PDTable* pd_table = 0x0;
     if (!get_table_from_entry(pdp_entry, PDP, (uint64_t**) &pd_table))
-        return pdp_entry;
+        return (uint64_t*) valid_pointer(pdp_entry);
 
     uint64_t* pd_entry = &pd_table->pt_tables[pd_index];
     PTTable* pt_table = 0x0;
     if (!get_table_from_entry(pd_entry, PD, (uint64_t**) &pt_table))
-        return pd_entry;
+        return (uint64_t*) valid_pointer(pd_entry);
 
-    // temporary way to check if an address is derefrenceable
-    // without causing a page fault if not
-    if ((uint64_t) pt_table >= 0x800000)
-        pt_table = (PTTable*) tmp_map((uint64_t) pt_table);
-
+    pt_table = (PTTable*) valid_pointer(pt_table);
     return &pt_table->entries[pt_index];
 }
 
