@@ -7,51 +7,82 @@
 ## Support for
 
 * x86_64
-* Legacy boot ( so be sure CSM is working if you have UEFI )
-
-## Debugging
-
-* press f5 in VS Code or run "(gdb) Launch"
-* using vscode extension: "C/C++" ( ms-vscode.cpptools )
-
-## Environment
-
-* using WSL2 / Linux
-* qemu-system-x86_64 as virtual-machine
-* make for automation
-* grub-mkrescue to create grub2 multiboot iso ( "sudo apt install grub2 xorriso" if needed )
-* ld as linker
-* gcc as c compiler
-* VS Code as Editor( IDE )
-* Extensions:
-  * IntelliSense / Debugging: C/C++ ( ms-vscode.cpptools )
+* Legacy boot (enable CSM if you have UEFI)
+---
+* Maybe support for ARM
+* Maybe support for 32bit
 
 ## ToDo-List
 
-* Documention
-  * VGA text buffer
-  * Paging
-* Interrupts
-  * Keyboard
-* Memory
-  * memory maps
-  * page table
-  * mapping
-  * frame allocator
-  * heap allocation
-* Error handling
-  * panic
-  * bootloader
-  * exceptions
-* Basic IO
-  * print
-  * keyboard input
-* Basic syscalls
+* [ ] Documention
+  * [ ] VGA text buffer
+  * [ ] Paging
+  * [ ] mapping
+* [x] Interrupts
+  * [x] Keyboard
+  * [x] timer
+  * [x] exceptions
+* [ ] Memory
+  * [x] get memory map
+  * [x] create page tables
+  * [x] mapping
+  * [ ] frame allocator (really basic)
+  * [ ] heap allocation
+* [x] Error handling
+  * [x] exceptions
+* [x] Basic IO
+  * [x] print
+  * [x] keyboard input
+* [ ] Basic syscalls
 
 ---
 
-* Maybe support for ARM
-* Maybe support for 32bit
+## Environment
+
+* OS:
+  * Linux
+  * Windows with WSL2
+* IDE:
+    * VSCode
+    * Neovim
+
+---
+
+## Dev dependencies
+
+* create iso:
+  * `sudo apt install grub2 xorriso` (debian based)
+  * `sudo pacman -S libisoburn` (arch based)
+* VSCode:
+  * install extension `C/C++` (ms-vscode.cpptools) (language server / Debugging)
+* Neovim:
+  * install [cpptools](https://github.com/mfussenegger/nvim-dap/wiki/C-C---Rust-(gdb-via--vscode-cpptools)) (Debugger)
+  * install `clangd` (i.e. via lsp_installer) (language server)
+* compiling/(assambling):
+  * install `nasm` (assambler)
+  * install `ld` (Linker)
+  * install `gcc` (should already be installed) (C compiler)
+  * install `make` (run Makefile / automation)
+* Testing/Debugging:
+  * install `qemu` (virtual-machine)
+
+---
+
+## Run kernel in a VM
+
+* run `make run`
+
+## Debugging
+
+* run `make debug`
+* VSCode
+  * press f5 or run task "(gdb) Launch"
+  * using extension: "C/C++" (ms-vscode.cpptools)
+* Neovim
+  * press f5 or `:lua require'dap'.continue()`
+  * using plugin: [nvim-dap](https://github.com/mfussenegger/nvim-dap)
+
+---
 
 ## Resources
 
