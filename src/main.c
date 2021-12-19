@@ -8,8 +8,6 @@ extern void test_user_function() {
     while(1){};
 }
 
-extern void jump_usermode(uint64_t usr_stack_top, uint64_t usr_func_addr);
-
 
 void kernel_main(uint64_t boot_info_addr) {
     clear_screen();
@@ -39,33 +37,12 @@ void kernel_main(uint64_t boot_info_addr) {
     clear_screen();
     // --------------------------------------------------
 
-
     // start scheduler and go usermode ------------------
     init_tss();
 
-    // TODO: create paging tabels for user/task and load into cr3
-    // add_task();
-    // start_scheduler();
+    add_task("first task", (uint64_t) &test_user_function);
 
-    // map stack
-    uint64_t user_stack_top = 0x1000000f000;
-    for (int i = 0; i < 7; i++) {
-        hFrame frame = alloc_frame();
-        hPage page = get_hPage(user_stack_top - i * 0x1000);
-        map_to(page, frame, Present | Writeable | User);
-    }
-
-    // map test_user_function
-    uint64_t user_func_addr = 0x10000000000 + ((uint64_t) &test_user_function & 0xfff);
-    hFrame frame = get_hFrame((uint64_t) &test_user_function);
-    hPage page = get_hPage(user_func_addr);
-    map_to(page, frame, Present | Writeable | User);
-
-    println("virtual user_func_addr: %x", user_func_addr);
-
-
-    println("going into user mode...");
-    jump_usermode(user_stack_top, user_func_addr);
+    start_scheduler();
     // --------------------------------------------------
 
     // should never get reached

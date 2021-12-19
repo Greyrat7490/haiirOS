@@ -42,7 +42,7 @@ static void keyboard_handler(struct interrupt_frame* frame) {
         }
 
         if (state == KEY_PRESSED)
-            printf( "%c", scancode_to_ascii(scancode));
+            printf("%c", scancode_to_ascii(scancode));
     }    
 
     outb(0x20, 0x20);

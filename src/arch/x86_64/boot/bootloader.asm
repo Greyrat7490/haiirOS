@@ -28,13 +28,13 @@ load_tss:
     mov rdi, gdt64
     add rdi, gdt64.tss
     mov rax, TSS64
-    mov word [rdi + 2], ax      ; set base( 15 - 0 )
+    mov word [rdi + 2], ax      ; set base (15 - 0)
     shr rax, 16
-    mov byte [rdi + 4], al      ; set base( 23 - 16 )
+    mov byte [rdi + 4], al      ; set base (23 - 16)
     shr rax, 8
-    mov byte [rdi + 7], al      ; set base( 31 - 24 )
+    mov byte [rdi + 7], al      ; set base (31 - 24)
     shr rax, 8
-    mov dword [rdi + 8], eax    ; set base( 63 - 32 )
+    mov dword [rdi + 8], eax    ; set base (63 - 32)
     ; -----------------------------------------
 
     ; reload gdt
@@ -78,43 +78,43 @@ gdt64:
 .null: equ $ - gdt64        ; kernel null descriptor
     dq 0
 .code: equ $ - gdt64        ; ring 0 code descriptor
-    dw 0                    ; limit ( low )
-    dw 0                    ; base ( low )
-    db 0                    ; base ( middle )
+    dw 0                    ; limit (low)
+    dw 0                    ; base  (low)
+    db 0                    ; base  (middle)
     db 10011010b            ; present, kernel_mode, code_data_seg, code_seg, executable, read/write
     db 10100000b            ; 4k-paging, long_mode
-    db 0                    ; base ( high )
+    db 0                    ; base  (high)
 .data: equ $ - gdt64        ; ring 0 data descriptor
-    dw 0                    ; limit ( low )
-    dw 0                    ; base ( low )
-    db 0                    ; base ( middle )
+    dw 0                    ; limit (low)
+    dw 0                    ; base  (low)
+    db 0                    ; base  (middle)
     db 10010010b            ; present, kernel_mode, code_data_seg, data_seg, executable, read/write
     db 10100000b            ; 4k-paging, long_mode
-    db 0                    ; base ( high )
+    db 0                    ; base  (high)
 .user_null: equ $ - gdt64   ; user null descriptor
     dq 0
 .user_data equ $ - gdt64    ; ring 3 data descriptor
-    dw 0                    ; limit ( low )
-    dw 0                    ; base ( low )
-    db 0                    ; base ( middle )
+    dw 0                    ; limit (low)
+    dw 0                    ; base  (low)
+    db 0                    ; base  (middle)
     db 11110010b            ; present, user_mode, code_data_seg, data_seg, executable, read/write
     db 10100000b            ; 4k-paging
-    db 0                    ; base ( high )
+    db 0                    ; base  (high)
 .user_code equ $ - gdt64    ; ring 3 code descriptor
-    dw 0                    ; limit ( low )
-    dw 0                    ; base ( low )
-    db 0                    ; base ( middle )
+    dw 0                    ; limit (low)
+    dw 0                    ; base  (low)
+    db 0                    ; base  (middle)
     db 11111010b            ; present, user_mode, code_data_seg, code_seg, executable, read/write
     db 10100000b            ; 4k-paging, long_mode
-    db 0                    ; base ( high )
+    db 0                    ; base  (high)
 .tss: equ $ - gdt64
-    dw TSS_SIZE & 0xffff    ; limit( 15 - 0 )
-    dw 0                    ; base ( 15 - 0 )
-    db 0                    ; base ( 23 - 16 )
+    dw TSS_SIZE & 0xffff    ; limit (15 - 0)
+    dw 0                    ; base  (15 - 0)
+    db 0                    ; base  (23 - 16)
     db 10001001b            ; present, kernel_mode, system_seg,
-    db 10100000b            ; 4k-paging, long_mode, limit( 19 - 16 )
-    db 0                    ; base ( 31 - 24 )
-    dd 0                    ; base ( 63 - 32 )
+    db 10100000b            ; 4k-paging, lorg_mode, limit(19 - 16)
+    db 0                    ; base  (31 - 24)
+    dd 0                    ; base  (63 - 32)
     dd 0                    ; zero
 .pointer:
     dw $ - gdt64 - 1

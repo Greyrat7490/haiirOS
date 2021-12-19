@@ -21,8 +21,11 @@ flush_tss:
 
 ; rdi (1st arg) user_stack_top
 ; rsi (2st arg) user_function
+; rdx (3st arg) pml4_addr
 jump_usermode:
     cli
+
+    mov rbx, rdx
 
     mov rcx, 0xc0000080
     rdmsr
@@ -37,6 +40,7 @@ jump_usermode:
 
     mov rcx, rsi                        ; rcx will be loaded into RIP
     mov rsp, rdi                        ; set user stack pointer
+    mov cr3, rbx                        ; set cr3 to new pml4 table
 
     mov r11, 0x200                      ; r11 will be loaded into RFLAGS, 0x200 to enable interrupt
     o64 sysret                          ; o64 to keep in long mode

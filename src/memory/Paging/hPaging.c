@@ -28,7 +28,7 @@ typedef struct
 } PML4Table;
 
 
-static PML4Table* pml4_table;
+static PML4Table* s_pml4_table;
 
 // TODO: add mmap to check if memory area is available
 
@@ -88,7 +88,7 @@ static uint64_t* get_temp_entry() {
     const uint16_t i3 = get_lv3_index(virt_addr);
     const uint16_t i4 = get_lv4_index(virt_addr);
 
-    uint64_t* pml4_entry = &pml4_table->pdp_tables[i4];
+    uint64_t* pml4_entry = &s_pml4_table->pdp_tables[i4];
 
     PDPTable* pdp_table = (PDPTable*) (*pml4_entry & 0xfffff000);
     uint64_t* pdp_entry = &pdp_table->pd_tables[i3];
@@ -140,7 +140,7 @@ static bool get_table_from_entry(uint64_t* entry, enum PageDirType type, uint64_
     return true;
 }
 
-static uint64_t* get_entry_by_index(uint16_t pml4_index, uint16_t pdp_index, uint16_t pd_index, uint16_t pt_index) {
+static uint64_t* get_entry_by_index(PML4Table* pml4_table, uint16_t pml4_index, uint16_t pdp_index, uint16_t pd_index, uint16_t pt_index) {
     uint64_t* pml4_entry = &pml4_table->pdp_tables[pml4_index];
     PDPTable* pdp_table = 0x0;
     if (!get_table_from_entry(pml4_entry, PML4, (uint64_t**) &pdp_table))
@@ -160,13 +160,13 @@ static uint64_t* get_entry_by_index(uint16_t pml4_index, uint16_t pdp_index, uin
     return &pt_table->entries[pt_index];
 }
 
-static uint64_t* get_entry(uint64_t virt_addr) {
+static uint64_t* get_entry(PML4Table* pml4_table, uint64_t virt_addr) {
     uint16_t i1 = get_lv1_index(virt_addr);
     uint16_t i2 = get_lv2_index(virt_addr);
     uint16_t i3 = get_lv3_index(virt_addr);
     uint16_t i4 = get_lv4_index(virt_addr);
 
-    return get_entry_by_index(i4, i3, i2, i1);
+    return get_entry_by_index(pml4_table, i4, i3, i2, i1);
 }
 
 // return virtual address to the table
@@ -177,7 +177,6 @@ static uint64_t* create_table(uint64_t* entry, PageFlags flags) {
     return tmp_map(table_frame.start_addr);
 }
 
-// TODO: support creating tables in unmapped frames
 static void create_missing_tables(uint64_t* entry, hPage page, hFrame frame, PageFlags flags) {
     if ((*entry & PML4) == PML4) {
         PDPTable* pdp_table = (PDPTable*) create_table(entry, flags);
@@ -220,12 +219,12 @@ void init_paging() {
 
     println("pml4 addr: %x", addr);
 
-    pml4_table = (PML4Table*) addr;
+    s_pml4_table = (PML4Table*) addr;
 }
 
 // 0x0 (nullptr) if no valid and/or present entry exists
 uint64_t to_phys(uint64_t virt_addr) {
-    uint64_t* entry = get_entry(virt_addr);
+    uint64_t* entry = get_entry(s_pml4_table, virt_addr);
 
     if (!is_entry_valid(entry)) {
         println("virt_addr (%x) is not valid (has no entry)", virt_addr);
@@ -237,11 +236,11 @@ uint64_t to_phys(uint64_t virt_addr) {
         return 0x0;
     }
 
-    return (*entry & ~((uint64_t)0xfff)) + (virt_addr & 0xfff);
+    return (*entry & ~((uint64_t) 0xfff)) + (virt_addr & 0xfff);
 }
 
-void map_to(hPage page, hFrame frame, PageFlags flags) {
-    uint64_t* entry = get_entry(page.start_addr);
+static void map(uint64_t* pml4_table, hPage page, hFrame frame, PageFlags flags) {
+    uint64_t* entry = get_entry((PML4Table*) pml4_table, page.start_addr);
 
     if (is_entry_valid(entry)) {
         *entry = frame.start_addr | flags;
@@ -258,8 +257,30 @@ void map_to(hPage page, hFrame frame, PageFlags flags) {
     }
 }
 
+void map_frame(hPage page, hFrame frame, PageFlags flags) {
+    map((uint64_t*) s_pml4_table, page, frame, flags);
+}
+
+void map_user_frame(uint64_t* pml4_table, hPage page, hFrame frame, PageFlags flags) {
+    map(pml4_table, page, frame, flags);
+}
+
+uint64_t* create_user_pml4() {
+    PML4Table* pml4_addr = (PML4Table*) alloc_frame().start_addr;
+    
+    map_frame(get_hPage((uint64_t) pml4_addr), get_hFrame((uint64_t) pml4_addr), Present | Writeable | User);
+    
+    for (uint16_t i = 1; i < 512; i++)
+        pml4_addr->pdp_tables[i] = 0x0;
+
+    // for interrupts, exceptions, syscalls and rest of the jump_usermode function (and more)
+    pml4_addr->pdp_tables[0] = s_pml4_table->pdp_tables[0];
+   
+    return (uint64_t*) pml4_addr;
+}
+
 bool is_addr_present(uint64_t virt_addr) {
-    uint64_t* entry = get_entry(virt_addr);
+    uint64_t* entry = get_entry(s_pml4_table, virt_addr);
 
     if (is_entry_valid(entry))
         return is_entry_present(entry);
@@ -268,14 +289,14 @@ bool is_addr_present(uint64_t virt_addr) {
 }
 
 void show_entries(uint16_t ptEntries, uint16_t ptTables) {
-    println("pml4_table addr %x", pml4_table);
+    println("pml4_table addr %x", s_pml4_table);
 
     for (uint16_t i2 = 0; i2 < ptTables; i2++) {
-        uint64_t* entry = get_entry_by_index(0, 0, i2, 0);
+        uint64_t* entry = get_entry_by_index(s_pml4_table, 0, 0, i2, 0);
         println("pd_table[%d] %x", i2, *entry);
 
         for (uint16_t i1 = 0; i1 < ptEntries; i1++) {
-            uint64_t* entry = get_entry_by_index(0, 0, i2, i1);
+            uint64_t* entry = get_entry_by_index(s_pml4_table, 0, 0, i2, i1);
             println("  pt_table[%d] entry[%d] %x", i2, i1, *entry);
         }
     }
@@ -315,9 +336,9 @@ void test_mapping() {
     println("testAddr1 val: %d ", *testAddr1);
     println("*testAddr2 would cause a page fault");
 
-    map_to(page1, frame1, Present | Writeable);
-    map_to(page2, frame2, Present | Writeable); // needs to allocate a new frame for a new PageTable
-    map_to(page3, frame3, Present | Writeable); // needs to allocated several new frames for new PageTables
+    map_frame(page1, frame1, Present | Writeable);
+    map_frame(page2, frame2, Present | Writeable); // needs to allocate a new frame for a new PageTable
+    map_frame(page3, frame3, Present | Writeable); // needs to allocated several new frames for new PageTables
 
     println("after:");
     println("testAddr1 virt %x -> phys %x", (uint64_t) testAddr1, to_phys((uint64_t) testAddr1));
