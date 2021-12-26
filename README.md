@@ -2,13 +2,15 @@
 
 ## My first Kernel based on C
 
-> Fun project to learn C, Assambly x86 and how Kernels work
+> Fun project to learn C, Assembly x86 and how Kernels work
 
 ## Support for
 
 * x86_64
+* Intel
 * Legacy boot (enable CSM if you have UEFI)
 ---
+* Maybe support for AMD
 * Maybe support for ARM
 * Maybe support for 32bit
 
@@ -58,8 +60,8 @@
 * Neovim:
   * install [cpptools](https://github.com/mfussenegger/nvim-dap/wiki/C-C---Rust-(gdb-via--vscode-cpptools)) (Debugger)
   * install `clangd` (i.e. via lsp_installer) (language server)
-* compiling/(assambling):
-  * install `nasm` (assambler)
+* compiling/(assembling):
+  * install `nasm` (assembler)
   * install `ld` (Linker)
   * install `gcc` (should already be installed) (C compiler)
   * install `make` (run Makefile / automation)
