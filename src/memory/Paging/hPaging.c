@@ -239,6 +239,22 @@ uint64_t to_phys(uint64_t virt_addr) {
     return (*entry & ~((uint64_t) 0xfff)) + (virt_addr & 0xfff);
 }
 
+uint64_t to_usr_phys(uint64_t* pml4_table, uint64_t virt_addr) {
+    uint64_t* entry = get_entry((PML4Table*) pml4_table, virt_addr);
+
+    if (!is_entry_valid(entry)) {
+        println("virt_addr (%x) is not valid (has no entry)", virt_addr);
+        return 0x0;
+    }
+
+    if (!is_entry_present(entry)) {
+        println("virt_addr(%x) is not present", virt_addr);
+        return 0x0;
+    }
+
+    return (*entry & ~((uint64_t) 0xfff)) + (virt_addr & 0xfff);
+}
+
 static void map(uint64_t* pml4_table, hPage page, hFrame frame, PageFlags flags) {
     uint64_t* entry = get_entry((PML4Table*) pml4_table, page.start_addr);
 
@@ -281,6 +297,15 @@ uint64_t* create_user_pml4() {
 
 bool is_addr_present(uint64_t virt_addr) {
     uint64_t* entry = get_entry(s_pml4_table, virt_addr);
+
+    if (is_entry_valid(entry))
+        return is_entry_present(entry);
+
+    return false;
+}
+
+bool is_usr_addr_present(uint64_t* pml4_table, uint64_t virt_addr) {
+    uint64_t* entry = get_entry((PML4Table*) pml4_table, virt_addr);
 
     if (is_entry_valid(entry))
         return is_entry_present(entry);

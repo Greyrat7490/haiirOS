@@ -3,6 +3,7 @@
 section .text
 
 global jump_usermode
+global enable_syscalls
 global flush_tss
 
 ; GDT_KERNEL_NULL 0x0
@@ -19,28 +20,76 @@ flush_tss:
     ltr ax
     ret
 
-; rdi (1st arg) user_stack_top
-; rsi (2st arg) user_function
-; rdx (3st arg) pml4_addr
-jump_usermode:
+enable_syscalls:
     cli
-
-    mov rbx, rdx
 
     mov rcx, 0xc0000080
     rdmsr
     or eax, 1                           ; enable sysret/syscall
     wrmsr
-    mov rcx, 0xc0000081                 ; get STAR
+
+    mov rcx, 0xc0000081                 ; get STAR (set gdt entries for sysret/syscall)
     rdmsr
     mov edx, 0x00180008                 ; gdt entry: 0x0018 for sysret, gdt entry: 0x0008 for syscall
-    wrmsr                               ; write STAR
-                                        ; sysret: cs = 0x18 + 0x10, ss = 0x18 + 0x8
+    wrmsr                               ; sysret: cs = 0x18 + 0x10, ss = 0x18 + 0x8
                                         ; syscall: cs = 0x8, ss = 0x8 + 0x8
 
+    mov rcx, 0xc0000082                 ; get LSTAR (target instruction pointer when syscall)
+	rdmsr
+    mov rdi, syscall_entry
+    mov eax, edi                        ; eax = lower 32bits to write into LSTAR
+    shr rdi, 32
+    mov edx, edi                        ; edx = higher 32bits
+    wrmsr
+
+    mov rcx, 0xc0000084                 ; get FSTAR (flags which will be cleared on syscall)
+    rdmsr
+    or eax, (1 << 9)                    ; disable interrupts
+    wrmsr
+
+    ret
+
+
+; rdi (1st arg) user_stack_top
+; rsi (2st arg) user_function
+; rdx (3st arg) pml4_addr
+jump_usermode:
     mov rcx, rsi                        ; rcx will be loaded into RIP
     mov rsp, rdi                        ; set user stack pointer
-    mov cr3, rbx                        ; set cr3 to new pml4 table
+    mov r11, (1 << 9)                   ; r11 will be loaded into RFLAGS, 9th bit to enable interrupts
+    mov cr3, rdx                        ; set cr3 to new pml4 table
 
-    mov r11, 0x200                      ; r11 will be loaded into RFLAGS, 0x200 to enable interrupt
     o64 sysret                          ; o64 to keep in long mode
+
+global syscall_entry
+syscall_entry:
+    cli
+
+    mov rbx, rsp                        ; save user stack
+    mov rsp, tmp_stack
+
+    push rcx
+    push r11
+
+    sti
+
+    ; look into syscall table
+
+    ; call the right syscall function
+    extern test_syscall
+    call test_syscall
+    int 0x3                             ; breakpoint interrupt for testing
+
+    ; go back in usermode
+    pop r11
+    pop rcx
+
+    mov rsp, rbx
+    o64 sysret
+
+section .bss
+
+; temporary (kernel)stack for syscalls
+align 4096
+    resb 4096
+tmp_stack:

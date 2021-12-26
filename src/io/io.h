@@ -10,4 +10,3 @@ void println(const char* fmt, ...);
 void set_color(uint8_t background, uint8_t foreground);
 
 #endif // H_IO
-

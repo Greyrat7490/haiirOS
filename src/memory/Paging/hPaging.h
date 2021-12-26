@@ -24,7 +24,10 @@ void map_user_frame(uint64_t* pml4_table, hPage page, hFrame frame, PageFlags fl
 uint64_t* create_user_pml4();
 
 uint64_t to_phys(uint64_t virt_addr);
+uint64_t to_usr_phys(uint64_t* pml4_table, uint64_t virt_addr);
+
 bool is_addr_present(uint64_t virt_addr);
+bool is_usr_addr_present(uint64_t* pml4_table, uint64_t virt_addr);
 
 void test_mapping();
 void show_entries(uint16_t ptEntries, uint16_t ptTables);

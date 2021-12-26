@@ -5,6 +5,7 @@
 #include "scheduler.h"
 
 void init_tss();
+void init_syscalls();
 
 void add_task(const char* task_name, uint64_t func_addr);
 

@@ -1,10 +1,20 @@
+#include "types.h"
+#include "io/io.h"
+#include "proc/task.h"
 #include "memory/memory.h"
 #include "interrupt/idt.h"
-#include "proc/task.h"
-#include "io/io.h"
-#include "types.h"
+#include "syscall/syscall.h"
 
-extern void test_user_function() {
+
+void test_syscall() {
+    set_color(BLACK, WHITE);
+    println("test syscall");
+}
+
+void test_user_function() {
+    syscall();
+    syscall();
+
     while(1){};
 }
 
@@ -39,6 +49,7 @@ void kernel_main(uint64_t boot_info_addr) {
 
     // start scheduler and go usermode ------------------
     init_tss();
+    init_syscalls();
 
     add_task("first task", (uint64_t) &test_user_function);
 

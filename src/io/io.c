@@ -1,7 +1,7 @@
 #include "io.h"
 #include <stdarg.h>
 
-typedef struct 
+typedef struct
 {
     uint16_t buffer[25][80];
 } VGA_Buffer;
@@ -11,7 +11,7 @@ typedef struct
     uint8_t x;
     uint8_t y;
 
-    uint8_t color;  
+    uint8_t color;
 
     uint8_t width;
     uint8_t height;
@@ -27,9 +27,8 @@ static Console console = {
 };
 
 
-static void printByte(uint8_t byte) 
-{   
-    if (byte == '\0') 
+static void printByte(uint8_t byte) {
+    if (byte == '\0')
         return;
                 //LF            //CR
     else if (byte == '\n' || byte == '\r') {
@@ -149,7 +148,7 @@ void set_color(uint8_t bg, uint8_t fg) {
 void clear_screen() {
     uint16_t field = console.color << 8;
 
-    for (uint8_t y = 0; y < console.height; y++) 
+    for (uint8_t y = 0; y < console.height; y++)
         for (uint8_t x = 0; x < console.width; x++)
             vga_buffer->buffer[y][x] = field;
 
