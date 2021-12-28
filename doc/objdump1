@@ -1,0 +1,22 @@
+# Objdump -d output
+# GCC -O3 (same as O2 and O1)
+
+
+000000000010a0f0 <test_user_function>:
+  10a0f0:	ba 02 00 00 00       	mov    $0x2,%edx
+  10a0f5:	48 89 d0             	mov    %rdx,%rax
+  10a0f8:	0f 05                	syscall 
+  10a0fa:	31 c9                	xor    %ecx,%ecx
+  10a0fc:	48 89 c8             	mov    %rcx,%rax
+  10a0ff:	0f 05                	syscall 
+  10a101:	48 89 d0             	mov    %rdx,%rax
+  10a104:	0f 05                	syscall 
+  10a106:	0f 05                	syscall 
+  10a108:	0f 05                	syscall 
+  10a10a:	0f 05                	syscall 
+  10a10c:	48 89 c8             	mov    %rcx,%rax                    <- this causes an error, because 
+  10a10f:	0f 05                	syscall                             syscall sets rcx and GCC still thinks rcx is 0
+  10a111:	c3                   	ret    
+  10a112:	66 66 2e 0f 1f 84 00 	data16 cs nopw 0x0(%rax,%rax,1)
+  10a119:	00 00 00 00 
+  10a11d:	0f 1f 00             	nopl   (%rax)

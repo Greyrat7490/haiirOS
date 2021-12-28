@@ -1,0 +1,44 @@
+# difference __attribute__((no_caller_saved_registers))
+# -> pushes all registers on the stack and then pops all again
+
+000000000010d620 <test1>:
+  10d620:	48 83 ec 08          	sub    $0x8,%rsp
+  10d624:	be 0f 00 00 00       	mov    $0xf,%esi
+  10d629:	31 ff                	xor    %edi,%edi
+  10d62b:	e8 20 ca ff ff       	call   10a050 <set_color>
+  10d630:	31 c0                	xor    %eax,%eax
+  10d632:	48 8d 3d 4e c6 00 00 	lea    0xc64e(%rip),%rdi        # 119c87 <qwertz_oem_table+0x45f>
+  10d639:	e8 d2 c9 ff ff       	call   10a010 <println>
+  10d63e:	31 c0                	xor    %eax,%eax
+  10d640:	48 83 c4 08          	add    $0x8,%rsp
+  10d644:	e9 b7 fd ff ff       	jmp    10d400 <switch_task>
+  10d649:	0f 1f 80 00 00 00 00 	nopl   0x0(%rax)
+
+000000000010d650 <test2>:
+  10d650:	41 53                	push   %r11
+  10d652:	41 52                	push   %r10
+  10d654:	41 51                	push   %r9
+  10d656:	41 50                	push   %r8
+  10d658:	57                   	push   %rdi
+  10d659:	31 ff                	xor    %edi,%edi
+  10d65b:	56                   	push   %rsi
+  10d65c:	be 0f 00 00 00       	mov    $0xf,%esi
+  10d661:	51                   	push   %rcx
+  10d662:	52                   	push   %rdx
+  10d663:	50                   	push   %rax
+  10d664:	e8 e7 c9 ff ff       	call   10a050 <set_color>
+  10d669:	48 8d 3d 17 c6 00 00 	lea    0xc617(%rip),%rdi        # 119c87 <qwertz_oem_table+0x45f>
+  10d670:	31 c0                	xor    %eax,%eax
+  10d672:	e8 99 c9 ff ff       	call   10a010 <println>
+  10d677:	31 c0                	xor    %eax,%eax
+  10d679:	e8 82 fd ff ff       	call   10d400 <switch_task>
+  10d67e:	58                   	pop    %rax
+  10d67f:	5a                   	pop    %rdx
+  10d680:	59                   	pop    %rcx
+  10d681:	5e                   	pop    %rsi
+  10d682:	5f                   	pop    %rdi
+  10d683:	41 58                	pop    %r8
+  10d685:	41 59                	pop    %r9
+  10d687:	41 5a                	pop    %r10
+  10d689:	41 5b                	pop    %r11
+  10d68b:	c3                   	ret

@@ -47,6 +47,7 @@ enable_syscalls:
     or eax, (1 << 9)                    ; disable interrupts
     wrmsr
 
+    sti
     ret
 
 
@@ -54,38 +55,41 @@ enable_syscalls:
 ; rsi (2st arg) user_function
 ; rdx (3st arg) pml4_addr
 jump_usermode:
+    cli
+
     mov rcx, rsi                        ; rcx will be loaded into RIP
     mov rsp, rdi                        ; set user stack pointer
     mov r11, (1 << 9)                   ; r11 will be loaded into RFLAGS, 9th bit to enable interrupts
     mov cr3, rdx                        ; set cr3 to new pml4 table
 
+    extern switch_task
+    mov rax, switch_task                ; to virtual address
+    and rax, 0xfff
+    mov rbx, 0x10000000000
+    add rax, rbx
+    push rax                            ; return address if a task ends (switch to next task)
+
     o64 sysret                          ; o64 to keep in long mode
 
-global syscall_entry
 syscall_entry:
     cli
-
     mov rbx, rsp                        ; save user stack
     mov rsp, tmp_stack
-
-    push rcx
-    push r11
-
     sti
+ 
+    push rax
 
-    ; look into syscall table
+    extern syscall_table
+    mov rax, [syscall_table + rax * 8]  ; look into syscall table
+    call rax                            ; call the right syscall function
 
-    ; call the right syscall function
-    extern test_syscall
-    call test_syscall
-    int 0x3                             ; breakpoint interrupt for testing
+    pop rax
 
     ; go back in usermode
-    pop r11
-    pop rcx
-
     mov rsp, rbx
-    o64 sysret
+    mov r11, (1 << 9)                   ; enable interrupts
+    o64 sysret 
+ 
 
 section .bss
 

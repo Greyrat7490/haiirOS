@@ -3,19 +3,15 @@
 #include "proc/task.h"
 #include "memory/memory.h"
 #include "interrupt/idt.h"
-#include "syscall/syscall.h"
-
-
-void test_syscall() {
-    set_color(BLACK, WHITE);
-    println("test syscall");
-}
 
 void test_user_function() {
-    syscall();
-    syscall();
+    syscall(SYSCALL_TASK_END); // only as test
+    syscall(SYSCALL_WRITE);
+    syscall(SYSCALL_WRITE);
+    syscall(SYSCALL_SCHED_YIELD);
 
-    while(1){};
+    // will be skipped because of the sched_yield syscall
+    syscall(SYSCALL_WRITE);
 }
 
 

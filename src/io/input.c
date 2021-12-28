@@ -1,6 +1,6 @@
 #include "input.h"
-#include "keyboard/qwertz_keyboard.h"
 #include "io/io.h"
+#include "keyboard/qwertz_keyboard.h"
 
 static struct {
     enum keycode keycodes[256];

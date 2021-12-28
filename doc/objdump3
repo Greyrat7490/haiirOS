@@ -1,0 +1,24 @@
+# Objdump -d output
+# GCC -O3 (same as O2 and O1)
+# applied fix (prevent use of rcx to set rax)
+# fixed by clobbering rcx register (r11 too just to be sure)
+
+
+000000000010a0d0 <test_user_function>:
+  10a0d0:	ba 02 00 00 00       	mov    $0x2,%edx
+  10a0d5:	48 89 d0             	mov    %rdx,%rax
+  10a0d8:	0f 05                	syscall 
+  10a0da:	31 f6                	xor    %esi,%esi
+  10a0dc:	48 89 f0             	mov    %rsi,%rax
+  10a0df:	0f 05                	syscall 
+  10a0e1:	48 89 d0             	mov    %rdx,%rax        <- safe to use see dump2
+  10a0e4:	0f 05                	syscall 
+  10a0e6:	0f 05                	syscall 
+  10a0e8:	0f 05                	syscall 
+  10a0ea:	0f 05                	syscall 
+  10a0ec:	48 89 f0             	mov    %rsi,%rax        <- rsi and rdx are safe to use (not changed by syscall)
+  10a0ef:	0f 05                	syscall 
+  10a0f1:	c3                   	ret    
+  10a0f2:	66 66 2e 0f 1f 84 00 	data16 cs nopw 0x0(%rax,%rax,1)
+  10a0f9:	00 00 00 00 
+  10a0fd:	0f 1f 00             	nopl   (%rax)

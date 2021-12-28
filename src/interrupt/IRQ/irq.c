@@ -41,8 +41,10 @@ static void keyboard_handler(struct interrupt_frame* frame) {
             seq = 0;
         }
 
-        if (state == KEY_PRESSED)
+        if (state == KEY_PRESSED) {
+            set_color(BLACK, CYAN);
             printf("%c", scancode_to_ascii(scancode));
+        }
     }    
 
     outb(0x20, 0x20);

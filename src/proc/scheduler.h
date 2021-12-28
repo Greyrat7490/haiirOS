@@ -14,5 +14,6 @@ typedef struct TaskControlBlock {
 
 void add_tcb(TCB_t task);
 void start_scheduler();
+void switch_task();
 
 #endif // H_SCHEDULER

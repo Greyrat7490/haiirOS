@@ -1,0 +1,17 @@
+# Objdump -d output
+# GCC -O3 (same as O2 and O1)
+
+
+000000000010a0f0 <test_user_function>:
+  10a0f0:	ba 02 00 00 00       	mov    $0x2,%edx
+  10a0f5:	48 89 d0             	mov    %rdx,%rax
+  10a0f8:	0f 05                	syscall 
+  10a0fa:	31 c0                	xor    %eax,%eax
+  10a0fc:	0f 05                	syscall 
+  10a0fe:	48 89 d0             	mov    %rdx,%rax            <- causes NO error, because rdx was kept untouched by syscall
+  10a101:	0f 05                	syscall 
+  10a103:	0f 05                	syscall 
+  10a105:	0f 05                	syscall 
+  10a107:	0f 05                	syscall 
+  10a109:	c3                   	ret    
+  10a10a:	66 0f 1f 44 00 00    	nopw   0x0(%rax,%rax,1)

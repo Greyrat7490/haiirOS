@@ -3,6 +3,7 @@
 
 #include "types.h"
 #include "scheduler.h"
+#include "syscall/syscall.h"
 
 void init_tss();
 void init_syscalls();
