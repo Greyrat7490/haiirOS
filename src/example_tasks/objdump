@@ -1,0 +1,47 @@
+# output of objdump -d
+# err_task1 causes a page fault err_code 0x4 (not present page)
+
+# the function is too big only one frame got mapped
+
+# only temporary error, later tasks are
+# binary files so you know the size and 
+# you can map as much frames as needed
+
+
+0000000000109e00 <err_task>:
+  109e00:	31 c0                	xor    %eax,%eax                # <- frame 109000 (is mapped)
+  109e02:	48 8d 35 bf fa 00 00 	lea    0xfabf(%rip),%rsi
+  109e09:	48 89 c7             	mov    %rax,%rdi
+  109e0c:	0f 05                	syscall 
+  109e0e:	48 8d 35 b9 fa 00 00 	lea    0xfab9(%rip),%rsi
+  109e15:	0f 05                	syscall 
+  109e17:	48 8d 35 b6 fa 00 00 	lea    0xfab6(%rip),%rsi
+  109e1e:	0f 05                	syscall 
+  109e20:	48 8d 35 b3 fa 00 00 	lea    0xfab3(%rip),%rsi
+  109e27:	0f 05                	syscall 
+  109e29:	48 8d 35 b0 fa 00 00 	lea    0xfab0(%rip),%rsi
+  109e30:	0f 05                	syscall 
+  109e32:	48 8d 35 ad fa 00 00 	lea    0xfaad(%rip),%rsi
+  109e39:	0f 05                	syscall 
+  109e3b:	48 8d 35 aa fa 00 00 	lea    0xfaaa(%rip),%rsi
+  109e42:	0f 05                	syscall 
+  109e44:	48 8d 35 a7 fa 00 00 	lea    0xfaa7(%rip),%rsi
+  109e4b:	0f 05                	syscall 
+  109e4d:	48 8d 35 a4 fa 00 00 	lea    0xfaa4(%rip),%rsi
+  109e54:	0f 05                	syscall 
+
+  ....
+
+  109fd9:	48 8d 35 4b fa 00 00 	lea    0xfa4b(%rip),%rsi
+  109fe0:	0f 05                	syscall 
+  109fe2:	48 8d 35 49 fa 00 00 	lea    0xfa49(%rip),%rsi
+  109fe9:	0f 05                	syscall 
+  109feb:	48 8d 35 47 fa 00 00 	lea    0xfa47(%rip),%rsi
+  109ff2:	0f 05                	syscall 
+  109ff4:	48 8d 35 45 fa 00 00 	lea    0xfa45(%rip),%rsi
+  109ffb:	0f 05                	syscall 
+  109ffd:	48 8d 35 43 fa 00 00 	lea    0xfa43(%rip),%rsi
+  10a004:	0f 05                	syscall                         # <- frame 10a000 (a new frame)
+                                                                    only one frame was mapped for the
+                                                                    task function so this frame is 
+                                                                    not mapped

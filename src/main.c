@@ -4,22 +4,14 @@
 #include "memory/memory.h"
 #include "interrupt/idt.h"
 
-void test_user_function() {
-    syscall(SYSCALL_TASK_END); // only as test
-    syscall(SYSCALL_WRITE);
-    syscall(SYSCALL_WRITE);
-    syscall(SYSCALL_SCHED_YIELD);
-
-    // will be skipped because of the sched_yield syscall
-    syscall(SYSCALL_WRITE);
-}
-
+#include "example_tasks/err_task1.h"
+#include "example_tasks/task1.h"
 
 void kernel_main(uint64_t boot_info_addr) {
-    clear_screen();
-    set_color(BLACK, PINK);
+    kclear_screen();
+    kset_color(BLACK, PINK);
 
-    println("%s to %s!", "Welcome", "haiirOS");
+    kprintln("%s to %s!", "Welcome", "haiirOS");
 
     // memory --------------------------------------------
     hMemoryMap mmap = init_memory_map(boot_info_addr);
@@ -40,14 +32,15 @@ void kernel_main(uint64_t boot_info_addr) {
 
     test_mapping();
 
-    clear_screen();
+    kclear_screen();
     // --------------------------------------------------
 
     // start scheduler and go usermode ------------------
     init_tss();
     init_syscalls();
 
-    add_task("first task", (uint64_t) &test_user_function);
+    // add_task("task1 causes err", (uint64_t) &err_task);
+    add_task("task1", (uint64_t) &task1);
 
     start_scheduler();
     // --------------------------------------------------

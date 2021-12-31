@@ -62,13 +62,6 @@ jump_usermode:
     mov r11, (1 << 9)                   ; r11 will be loaded into RFLAGS, 9th bit to enable interrupts
     mov cr3, rdx                        ; set cr3 to new pml4 table
 
-    extern switch_task
-    mov rax, switch_task                ; to virtual address
-    and rax, 0xfff
-    mov rbx, 0x10000000000
-    add rax, rbx
-    push rax                            ; return address if a task ends (switch to next task)
-
     o64 sysret                          ; o64 to keep in long mode
 
 syscall_entry:
@@ -77,13 +70,9 @@ syscall_entry:
     mov rsp, tmp_stack
     sti
  
-    push rax
-
     extern syscall_table
     mov rax, [syscall_table + rax * 8]  ; look into syscall table
     call rax                            ; call the right syscall function
-
-    pop rax
 
     ; go back in usermode
     mov rsp, rbx

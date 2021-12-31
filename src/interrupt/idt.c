@@ -44,7 +44,7 @@ void init_idt() {
 
     init_exceptions();
 
-    println("IDT at: %x", (uint64_t)&idt);
+    kprintln("IDT at: %x", (uint64_t)&idt);
 
     struct {
         uint16_t length;

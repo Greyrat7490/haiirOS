@@ -22,10 +22,10 @@ void select_keyboard_layout(enum keyboard_layouts layout) {
         for (uint8_t i = 0; i < 6; i++)
             keyboard.numpad_table[i] = qwertz_numpad_table[i];
 
-        println("Keyboard layout QWERTZ");
+        kprintln("Keyboard layout QWERTZ");
     }
     else
-        println("Keyboard layout is not supported (so far)");
+        kprintln("Keyboard layout is not supported (so far)");
 }
 
 char scancode_to_ascii(uint8_t scancode) {

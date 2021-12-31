@@ -180,7 +180,7 @@ static uint64_t* create_table(uint64_t* entry, PageFlags flags) {
 static void create_missing_tables(uint64_t* entry, hPage page, hFrame frame, PageFlags flags) {
     if ((*entry & PML4) == PML4) {
         PDPTable* pdp_table = (PDPTable*) create_table(entry, flags);
-        println("%s", "pdp table created");
+        kprintln("%s", "pdp table created");
 
         uint64_t i3 = get_lv3_index(page.start_addr);
         entry = &pdp_table->pd_tables[i3];
@@ -189,7 +189,7 @@ static void create_missing_tables(uint64_t* entry, hPage page, hFrame frame, Pag
 
     if (*entry & PDP) {
         PDTable* pd_table = (PDTable*) create_table(entry, flags);
-        println("%s", "pd table created");
+        kprintln("%s", "pd table created");
 
         uint64_t i2 = get_lv2_index(page.start_addr);
         entry = &pd_table->pt_tables[i2];
@@ -198,7 +198,7 @@ static void create_missing_tables(uint64_t* entry, hPage page, hFrame frame, Pag
 
     if (*entry & PD) {
         PTTable* pt_table = (PTTable*) create_table(entry, flags);
-        println("%s", "pt table created");
+        kprintln("%s", "pt table created");
 
         uint64_t i1 = get_lv1_index(page.start_addr);
         pt_table->entries[i1] = frame.start_addr | flags;
@@ -217,7 +217,7 @@ void init_paging() {
         : "%rax"
     );
 
-    println("pml4 addr: %x", addr);
+    kprintln("pml4 addr: %x", addr);
 
     s_pml4_table = (PML4Table*) addr;
 }
@@ -227,12 +227,12 @@ uint64_t to_phys(uint64_t virt_addr) {
     uint64_t* entry = get_entry(s_pml4_table, virt_addr);
 
     if (!is_entry_valid(entry)) {
-        println("virt_addr (%x) is not valid (has no entry)", virt_addr);
+        kprintln("virt_addr (%x) is not valid (has no entry)", virt_addr);
         return 0x0;
     }
 
     if (!is_entry_present(entry)) {
-        println("virt_addr(%x) is not present", virt_addr);
+        kprintln("virt_addr(%x) is not present", virt_addr);
         return 0x0;
     }
 
@@ -243,12 +243,12 @@ uint64_t to_usr_phys(uint64_t* pml4_table, uint64_t virt_addr) {
     uint64_t* entry = get_entry((PML4Table*) pml4_table, virt_addr);
 
     if (!is_entry_valid(entry)) {
-        println("virt_addr (%x) is not valid (has no entry)", virt_addr);
+        kprintln("virt_addr (%x) is not valid (has no entry)", virt_addr);
         return 0x0;
     }
 
     if (!is_entry_present(entry)) {
-        println("virt_addr(%x) is not present", virt_addr);
+        kprintln("virt_addr(%x) is not present", virt_addr);
         return 0x0;
     }
 
@@ -269,7 +269,7 @@ static void map(uint64_t* pml4_table, hPage page, hFrame frame, PageFlags flags)
             return;
         }
 
-        println("A Page directory is not present -> could not get pt entry");
+        kprintln("A Page directory is not present -> could not get pt entry");
     }
 }
 
@@ -314,15 +314,15 @@ bool is_usr_addr_present(uint64_t* pml4_table, uint64_t virt_addr) {
 }
 
 void show_entries(uint16_t ptEntries, uint16_t ptTables) {
-    println("pml4_table addr %x", s_pml4_table);
+    kprintln("pml4_table addr %x", s_pml4_table);
 
     for (uint16_t i2 = 0; i2 < ptTables; i2++) {
         uint64_t* entry = get_entry_by_index(s_pml4_table, 0, 0, i2, 0);
-        println("pd_table[%d] %x", i2, *entry);
+        kprintln("pd_table[%d] %x", i2, *entry);
 
         for (uint16_t i1 = 0; i1 < ptEntries; i1++) {
             uint64_t* entry = get_entry_by_index(s_pml4_table, 0, 0, i2, i1);
-            println("  pt_table[%d] entry[%d] %x", i2, i1, *entry);
+            kprintln("  pt_table[%d] entry[%d] %x", i2, i1, *entry);
         }
     }
 }
@@ -332,14 +332,14 @@ void show_entries(uint16_t ptEntries, uint16_t ptTables) {
 // 0x800000     -> 0x3000
 // 0xfffffff000 -> 0xfff000
 void test_mapping() {
-    clear_screen();
+    kclear_screen();
     // fixed
     // println("**<- flush_TLB clears the first two fields (first 32bit) of the console");
 
     // test how much is mapped (should be 8MiB)
-    println("%x is present = %b", 0x7fffff, is_addr_present(0x7fffff));
-    println("%x is present = %b", 0x800000, is_addr_present(0x800000));
-    println("%x is present = %b", 0xfffffff000, is_addr_present(0xfffffff000));
+    kprintln("%x is present = %b", 0x7fffff, is_addr_present(0x7fffff));
+    kprintln("%x is present = %b", 0x800000, is_addr_present(0x800000));
+    kprintln("%x is present = %b", 0xfffffff000, is_addr_present(0xfffffff000));
 
 
     hFrame frame1 = get_hFrame(0xb8000);
@@ -354,32 +354,32 @@ void test_mapping() {
     uint16_t* testAddr2 = (uint16_t*) 0x800010;
     uint64_t* testAddr3 = (uint64_t*) 0xfffffffff0;
 
-    println("before:");
-    println("testAddr1 virt %x -> phys %x", (uint64_t) testAddr1, to_phys((uint64_t) testAddr1));
-    println("testAddr2 virt %x -> phys %x", (uint64_t) testAddr2, to_phys((uint64_t) testAddr2));
-    println("testAddr3 virt %x -> phys %x", (uint64_t) testAddr3, to_phys((uint64_t) testAddr3));
-    println("testAddr1 val: %d ", *testAddr1);
-    println("*testAddr2 would cause a page fault");
+    kprintln("before:");
+    kprintln("testAddr1 virt %x -> phys %x", (uint64_t) testAddr1, to_phys((uint64_t) testAddr1));
+    kprintln("testAddr2 virt %x -> phys %x", (uint64_t) testAddr2, to_phys((uint64_t) testAddr2));
+    kprintln("testAddr3 virt %x -> phys %x", (uint64_t) testAddr3, to_phys((uint64_t) testAddr3));
+    kprintln("testAddr1 val: %d ", *testAddr1);
+    kprintln("*testAddr2 would cause a page fault");
 
     map_frame(page1, frame1, Present | Writeable);
     map_frame(page2, frame2, Present | Writeable); // needs to allocate a new frame for a new PageTable
     map_frame(page3, frame3, Present | Writeable); // needs to allocated several new frames for new PageTables
 
-    println("after:");
-    println("testAddr1 virt %x -> phys %x", (uint64_t) testAddr1, to_phys((uint64_t) testAddr1));
-    println("testAddr2 virt %x -> phys %x", (uint64_t) testAddr2, to_phys((uint64_t) testAddr2));
-    println("testAddr3 virt %x -> phys %x", (uint64_t) testAddr3, to_phys((uint64_t) testAddr3));
+    kprintln("after:");
+    kprintln("testAddr1 virt %x -> phys %x", (uint64_t) testAddr1, to_phys((uint64_t) testAddr1));
+    kprintln("testAddr2 virt %x -> phys %x", (uint64_t) testAddr2, to_phys((uint64_t) testAddr2));
+    kprintln("testAddr3 virt %x -> phys %x", (uint64_t) testAddr3, to_phys((uint64_t) testAddr3));
 
     for (uint16_t i = 24 * 80; i < 25 * 80; i++)
         *(testAddr1 + i) = WHITE << 12;
 
     *testAddr3 = 86;
 
-    println("after '*testAddr3 = 86':");
-    println("testAddr3 val: %d", *testAddr3);
+    kprintln("after '*testAddr3 = 86':");
+    kprintln("testAddr3 val: %d", *testAddr3);
 
 
-    println("%x is present = %b", 0x800000, is_addr_present(0x800000));
-    println("%x is present = %b", 0xfffffff000, is_addr_present(0xfffffff000));
+    kprintln("%x is present = %b", 0x800000, is_addr_present(0x800000));
+    kprintln("%x is present = %b", 0xfffffff000, is_addr_present(0xfffffff000));
 }
 

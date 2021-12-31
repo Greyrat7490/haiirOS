@@ -6,26 +6,56 @@
 
 typedef enum {
     SYSCALL_WRITE = 0,
+    SYSCALL_TEST,
     SYSCALL_SCHED_YIELD,
-    SYSCALL_TASK_END,       // only tmp for testing
 
     SYSCALLS_COUNT
 } syscall_num;
 
-static inline void syscall(uint64_t num) {
+
+static inline void syscall0(uint64_t num) {
+    if (num >= SYSCALLS_COUNT)
+        return;
+    // rax = syscall number
+    __asm__ volatile ("syscall" : : "a"(num) : "rcx", "r11");
+    // rcx in the clobber list very important!!!
+    // otherwise gcc screws up with setting rax correctly (when optimization is enabled),
+    // because gcc doesn't know rcx will be set on syscall
+    // see Doc/objdump(1 - 3)
+}
+static inline void syscall1(uint64_t num, uint64_t arg1) {
+    if (num >= SYSCALLS_COUNT)
+        return;
+    __asm__ volatile ("syscall" : : "a"(num), "D"(arg1) : "rcx", "r11");
+}
+
+static inline void syscall2(uint64_t num, uint64_t arg1, uint64_t arg2) {
+    if (num >= SYSCALLS_COUNT)
+        return;
+    __asm__ volatile ("syscall" : : "a"(num), "D"(arg1), "S"(arg2) : "rcx", "r11");
+}
+
+static inline void syscall3(uint64_t num, uint64_t arg1, uint64_t arg2, uint64_t arg3) {
+    if (num >= SYSCALLS_COUNT)
+        return;
+    __asm__ volatile ("syscall" : : "a"(num), "D"(arg1), "S"(arg2), "d"(arg3): "rcx", "r11");
+}
+
+static inline void syscall4(uint64_t num, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4) {
     if (num >= SYSCALLS_COUNT)
         return;
 
-    // rax = syscall number
     __asm__ volatile (
         "syscall"
         :
-        : "a"(num)
-        : "rcx", "r11"  // very important!!!
-                        // otherwise gcc screws up with setting rax correctly (when optimization is enabled),
-                        // because gcc doesn't know rcx was set after syscall
-                        // see Doc/objdump(1 - 3)
+        : "a"(num), "D"(arg1), "S"(arg2), "d"(arg3), "c"(arg4)
+        : "r11" // no need to put rcx in the clobber list because rcx is already as input declared
     );
+}
+
+
+static inline void write(uint64_t fd, const char* buffer) {
+    syscall2(SYSCALL_WRITE, fd, (uint64_t) buffer);
 }
 
 #endif // H_SYSCALL

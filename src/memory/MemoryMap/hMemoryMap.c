@@ -27,10 +27,10 @@ hMemoryMap init_memory_map(uint64_t boot_info_addr) {
             elf_sections = (struct multiboot_tag_elf_sections*) tag;
             break;
         case MULTIBOOT_TAG_TYPE_BOOT_LOADER_NAME:
-            println("Bootloader name: %s", ((struct multiboot_tag_string*) tag)->string);
+            kprintln("Bootloader name: %s", ((struct multiboot_tag_string*) tag)->string);
             break;
         case MULTIBOOT_TAG_TYPE_BASIC_MEMINFO:
-            println( "mem_lower: %x, mem_upper: %x",
+            kprintln( "mem_lower: %x, mem_upper: %x",
                 ((struct multiboot_tag_basic_meminfo*) tag)->mem_lower,
                 ((struct multiboot_tag_basic_meminfo*) tag)->mem_upper
             );
@@ -49,26 +49,26 @@ hMemoryMap init_memory_map(uint64_t boot_info_addr) {
 }
 
 void print_memory_map(hMemoryMap* mmap) {
-    println("memory_map addr: %x", mmap->mapTag);
-    println("kernel addr: %x", mmap->kernel_addr);
-    println("elf_sections addr: %x", mmap->elf_sections);
+    kprintln("memory_map addr: %x", mmap->mapTag);
+    kprintln("kernel addr: %x", mmap->kernel_addr);
+    kprintln("elf_sections addr: %x", mmap->elf_sections);
 
     uint64_t size = 0;
     multiboot_memory_map_t* entry = mmap->first_entry;
     do {
-        printf("%x - %x", entry->addr, entry->addr + entry->len);
+        kprintf("%x - %x", entry->addr, entry->addr + entry->len);
 
         if (entry->type == MULTIBOOT_MEMORY_RESERVED)
-            println(" (reserved)");
+            kprintln(" (reserved)");
         else if(entry->type == MULTIBOOT_MEMORY_AVAILABLE) {
             size += entry->len;
-            println(" (available)");
+            kprintln(" (available)");
         } else
-            println(" (type %d)", entry->type);
+            kprintln(" (type %d)", entry->type);
 
     } while ((entry = get_next_mmap_entry(mmap, entry)) != 0);
 
-    println("Memory size available: %x", size);
+    kprintln("Memory size available: %x", size);
 }
 
 // 0 means there is no next entry

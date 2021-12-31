@@ -13,22 +13,22 @@ void add_tcb(TCB_t task) {
 }
 
 void start_scheduler() {
-    println("func_addr:  %x", s_tasks[0].user_func);
-    println("pml4_addr:  %x", s_tasks[0].virt_addr_space);
-    println("stack_addr: %x", s_tasks[0].user_stack);
+    kprintln("func_addr:  %x", s_tasks[0].user_func);
+    kprintln("pml4_addr:  %x", s_tasks[0].virt_addr_space);
+    kprintln("stack_addr: %x", s_tasks[0].user_stack);
 
     if (s_tasks[0].user_func == 0x0 || s_tasks[0].user_stack == 0x0 || s_tasks[0].virt_addr_space == 0x0) {
-        println("Error no init task set");
+        kprintln("Error no init task set");
         return;
     }
 
-    println("going into user mode...");
+    kprintln("going into user mode...");
     jump_usermode(s_tasks[0].user_stack, s_tasks[0].user_func, s_tasks[0].virt_addr_space);
 }
 
 // only one task so far so instead just idle
 void switch_task() {
-    println("next task... (no other task so idle)");
+    kprintln("next task... (no other task so idle)");
     // TODO: syscalls in syscalls don't work
     // syscall(SYSCALL_WRITE);
 

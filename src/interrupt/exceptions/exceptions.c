@@ -9,169 +9,169 @@
 
 __attribute__((interrupt))
 static void exc0 (struct interrupt_frame* frame) {
-    println("Exception0: divide by zero");
-    println("  instruction pointer: %x", frame->rip);
-    println("  code seg: %x", frame->cs);
-    println("  rflags: %d", frame->rflags);
-    println("  stack pointer: %x", frame->rsp);
-    println("  stack seg: %x", frame->ss);
+    kprintln("Exception0: divide by zero");
+    kprintln("  instruction pointer: %x", frame->rip);
+    kprintln("  code seg: %x", frame->cs);
+    kprintln("  rflags: %d", frame->rflags);
+    kprintln("  stack pointer: %x", frame->rsp);
+    kprintln("  stack seg: %x", frame->ss);
     __asm__("hlt");
 }
 
 __attribute__((interrupt))
 static void exc1 (struct interrupt_frame* frame) {
-    println("Exception1: debug");
-    println("  instruction pointer: %x", frame->rip);
-    println("  code seg: %x", frame->cs);
-    println("  rflags: %d", frame->rflags);
-    println("  stack pointer: %x", frame->rsp);
-    println("  stack seg: %x", frame->ss);
+    kprintln("Exception1: debug");
+    kprintln("  instruction pointer: %x", frame->rip);
+    kprintln("  code seg: %x", frame->cs);
+    kprintln("  rflags: %d", frame->rflags);
+    kprintln("  stack pointer: %x", frame->rsp);
+    kprintln("  stack seg: %x", frame->ss);
 }
 
 __attribute__((interrupt))
 static void exc2 (struct interrupt_frame* frame) {
-    println("Exception2: non maskable interrupt");
-    println("  instruction pointer: %x", frame->rip);
-    println("  code seg: %x", frame->cs);
-    println("  rflags: %d", frame->rflags);
-    println("  stack pointer: %x", frame->rsp);
-    println("  stack seg: %x", frame->ss);
+    kprintln("Exception2: non maskable interrupt");
+    kprintln("  instruction pointer: %x", frame->rip);
+    kprintln("  code seg: %x", frame->cs);
+    kprintln("  rflags: %d", frame->rflags);
+    kprintln("  stack pointer: %x", frame->rsp);
+    kprintln("  stack seg: %x", frame->ss);
     __asm__("hlt");
 }
 
 __attribute__((interrupt))
 static void exc3 (struct interrupt_frame* frame) {
-    println("Exception3: breakpoint");
-    println("  instruction pointer: %x", frame->rip);
-    println("  code seg: %x", frame->cs);
-    println("  rflags: %d", frame->rflags);
-    println("  stack pointer: %x", frame->rsp);
-    println("  stack seg: %x", frame->ss);
+    kprintln("Exception3: breakpoint");
+    kprintln("  instruction pointer: %x", frame->rip);
+    kprintln("  code seg: %x", frame->cs);
+    kprintln("  rflags: %d", frame->rflags);
+    kprintln("  stack pointer: %x", frame->rsp);
+    kprintln("  stack seg: %x", frame->ss);
 }
 
 __attribute__((interrupt))
 static void exc4 (struct interrupt_frame* frame) {
-    println("Exception4: overflow");
-    println("  instruction pointer: %x", frame->rip);
-    println("  code seg: %x", frame->cs);
-    println("  rflags: %d", frame->rflags);
-    println("  stack pointer: %x", frame->rsp);
-    println("  stack seg: %x", frame->ss);
+    kprintln("Exception4: overflow");
+    kprintln("  instruction pointer: %x", frame->rip);
+    kprintln("  code seg: %x", frame->cs);
+    kprintln("  rflags: %d", frame->rflags);
+    kprintln("  stack pointer: %x", frame->rsp);
+    kprintln("  stack seg: %x", frame->ss);
     __asm__("hlt");
 }
 
 __attribute__((interrupt))
 static void exc5 (struct interrupt_frame* frame) {
-    println("Exception5: bound_range_overflow");
-    println("  instruction pointer: %x", frame->rip);
-    println("  code seg: %x", frame->cs);
-    println("  rflags: %d", frame->rflags);
-    println("  stack pointer: %x", frame->rsp);
-    println("  stack seg: %x", frame->ss);
+    kprintln("Exception5: bound_range_overflow");
+    kprintln("  instruction pointer: %x", frame->rip);
+    kprintln("  code seg: %x", frame->cs);
+    kprintln("  rflags: %d", frame->rflags);
+    kprintln("  stack pointer: %x", frame->rsp);
+    kprintln("  stack seg: %x", frame->ss);
     __asm__("hlt");
 }
 
 __attribute__((interrupt))
 static void exc6 (struct interrupt_frame* frame) {
-    println("Exception6: invalid_opcode");
-    println("  instruction pointer: %x", frame->rip);
-    println("  code seg: %x", frame->cs);
-    println("  rflags: %d", frame->rflags);
-    println("  stack pointer: %x", frame->rsp);
-    println("  stack seg: %x", frame->ss);
+    kprintln("Exception6: invalid_opcode");
+    kprintln("  instruction pointer: %x", frame->rip);
+    kprintln("  code seg: %x", frame->cs);
+    kprintln("  rflags: %d", frame->rflags);
+    kprintln("  stack pointer: %x", frame->rsp);
+    kprintln("  stack seg: %x", frame->ss);
     __asm__("hlt");
 }
 
 __attribute__((interrupt))
 static void exc7 (struct interrupt_frame* frame) {
-    println("Exception7: device not available");
-    println("  instruction pointer: %x", frame->rip);
-    println("  code seg: %x", frame->cs);
-    println("  rflags: %d", frame->rflags);
-    println("  stack pointer: %x", frame->rsp);
-    println("  stack seg: %x", frame->ss);
+    kprintln("Exception7: device not available");
+    kprintln("  instruction pointer: %x", frame->rip);
+    kprintln("  code seg: %x", frame->cs);
+    kprintln("  rflags: %d", frame->rflags);
+    kprintln("  stack pointer: %x", frame->rsp);
+    kprintln("  stack seg: %x", frame->ss);
     __asm__("hlt");
 }
 
 __attribute__((interrupt))
 static void exc8 (struct interrupt_frame* frame, uint64_t err_code) {
-    println("Exception8: double fault");
-    println("  instruction pointer: %x", frame->rip);
-    println("  code seg: %x", frame->cs);
-    println("  rflags: %d", frame->rflags);
-    println("  stack pointer: %x", frame->rsp);
-    println("  stack seg: %x", frame->ss);
-    println("  err_code: %x", err_code);
+    kprintln("Exception8: double fault");
+    kprintln("  instruction pointer: %x", frame->rip);
+    kprintln("  code seg: %x", frame->cs);
+    kprintln("  rflags: %d", frame->rflags);
+    kprintln("  stack pointer: %x", frame->rsp);
+    kprintln("  stack seg: %x", frame->ss);
+    kprintln("  err_code: %x", err_code);
     __asm__("hlt");
 }
 
 __attribute__((interrupt))
 static void exc9 (struct interrupt_frame* frame) {
-    println("Exception9: reserved");
-    println("  instruction pointer: %x", frame->rip);
-    println("  code seg: %x", frame->cs);
-    println("  rflags: %d", frame->rflags);
-    println("  stack pointer: %x", frame->rsp);
-    println("  stack seg: %x", frame->ss);
+    kprintln("Exception9: reserved");
+    kprintln("  instruction pointer: %x", frame->rip);
+    kprintln("  code seg: %x", frame->cs);
+    kprintln("  rflags: %d", frame->rflags);
+    kprintln("  stack pointer: %x", frame->rsp);
+    kprintln("  stack seg: %x", frame->ss);
 }
 
 __attribute__((interrupt))
 static void exc10 (struct interrupt_frame* frame, uint64_t err_code) {
-    println("Exception10: invalid_tss");
-    println("  instruction pointer: %x", frame->rip);
-    println("  code seg: %x", frame->cs);
-    println("  rflags: %d", frame->rflags);
-    println("  stack pointer: %x", frame->rsp);
-    println("  stack seg: %x", frame->ss);
-    println("  err_code: %x", err_code);
+    kprintln("Exception10: invalid_tss");
+    kprintln("  instruction pointer: %x", frame->rip);
+    kprintln("  code seg: %x", frame->cs);
+    kprintln("  rflags: %d", frame->rflags);
+    kprintln("  stack pointer: %x", frame->rsp);
+    kprintln("  stack seg: %x", frame->ss);
+    kprintln("  err_code: %x", err_code);
     __asm__("hlt");
 }
 
 __attribute__((interrupt))
 static void exc11 (struct interrupt_frame* frame, uint64_t err_code) {
-    println("Exception11: segment_not_present");
-    println("  instruction pointer: %x", frame->rip);
-    println("  code seg: %x", frame->cs);
-    println("  rflags: %d", frame->rflags);
-    println("  stack pointer: %x", frame->rsp);
-    println("  stack seg: %x", frame->ss);
-    println("  err_code: %x", err_code);
+    kprintln("Exception11: segment_not_present");
+    kprintln("  instruction pointer: %x", frame->rip);
+    kprintln("  code seg: %x", frame->cs);
+    kprintln("  rflags: %d", frame->rflags);
+    kprintln("  stack pointer: %x", frame->rsp);
+    kprintln("  stack seg: %x", frame->ss);
+    kprintln("  err_code: %x", err_code);
     __asm__("hlt");
 }
 
 __attribute__((interrupt))
 static void exc12 (struct interrupt_frame* frame, uint64_t err_code) {
-    println("Exception12: stack_segment_fault");
-    println("  instruction pointer: %x", frame->rip);
-    println("  code seg: %x", frame->cs);
-    println("  rflags: %d", frame->rflags);
-    println("  stack pointer: %x", frame->rsp);
-    println("  stack seg: %x", frame->ss);
-    println("  err_code: %x", err_code);
+    kprintln("Exception12: stack_segment_fault");
+    kprintln("  instruction pointer: %x", frame->rip);
+    kprintln("  code seg: %x", frame->cs);
+    kprintln("  rflags: %d", frame->rflags);
+    kprintln("  stack pointer: %x", frame->rsp);
+    kprintln("  stack seg: %x", frame->ss);
+    kprintln("  err_code: %x", err_code);
     __asm__("hlt");
 }
 __attribute__(( interrupt ))
 
 static void exc13( struct interrupt_frame* frame, uint64_t err_code ) {
-    println( "Exception13: general_protection_fault");
-    println( "  instructin pointer: %x", frame->rip );
-    println("  code seg: %x", frame->cs);
-    println("  rflags: %d", frame->rflags);
-    println("  stack pointer: %x", frame->rsp);
-    println("  stack seg: %x", frame->ss);
-    println("  err_code: %x", err_code);
+    kprintln( "Exception13: general_protection_fault");
+    kprintln( "  instructin pointer: %x", frame->rip );
+    kprintln("  code seg: %x", frame->cs);
+    kprintln("  rflags: %d", frame->rflags);
+    kprintln("  stack pointer: %x", frame->rsp);
+    kprintln("  stack seg: %x", frame->ss);
+    kprintln("  err_code: %x", err_code);
     __asm__("hlt");
 }
 
 __attribute__((interrupt))
 static void exc14 (struct interrupt_frame* frame, uint64_t err_code ) {
-    println("Exception14: page_fault");
-    println("  instruction pointer: %x", frame->rip);
-    println("  code seg: %x", frame->cs);
-    println("  rflags: %d", frame->rflags);
-    println("  stack pointer: %x", frame->rsp);
-    println("  stack seg: %x", frame->ss);
-    println("  err_code: %x", err_code);
+    kprintln("Exception14: page_fault");
+    kprintln("  instruction pointer: %x", frame->rip);
+    kprintln("  code seg: %x", frame->cs);
+    kprintln("  rflags: %d", frame->rflags);
+    kprintln("  stack pointer: %x", frame->rsp);
+    kprintln("  stack seg: %x", frame->ss);
+    kprintln("  err_code: %x", err_code);
  
     uint64_t addr = 0;
     __asm__ (
@@ -182,63 +182,63 @@ static void exc14 (struct interrupt_frame* frame, uint64_t err_code ) {
         : "%rax"
     );
     
-    println( "  at virt_addr: %x", addr );
+    kprintln( "  at virt_addr: %x", addr );
 
     __asm__("hlt");
 }
 
 __attribute__((interrupt))
 static void exc15 (struct interrupt_frame* frame) {
-    println("Exception15: reserved");
-    println("  instruction pointer: %x", frame->rip);
-    println("  code seg: %x", frame->cs);
-    println("  rflags: %d", frame->rflags);
-    println("  stack pointer: %x", frame->rsp);
-    println("  stack seg: %x", frame->ss);
+    kprintln("Exception15: reserved");
+    kprintln("  instruction pointer: %x", frame->rip);
+    kprintln("  code seg: %x", frame->cs);
+    kprintln("  rflags: %d", frame->rflags);
+    kprintln("  stack pointer: %x", frame->rsp);
+    kprintln("  stack seg: %x", frame->ss);
 }
 
 __attribute__((interrupt))
 static void exc16 (struct interrupt_frame* frame) {
-    println("Exception16: x87 floating-point");
-    println("  instruction pointer: %x", frame->rip);
-    println("  code seg: %x", frame->cs);
-    println("  rflags: %d", frame->rflags);
-    println("  stack pointer: %x", frame->rsp);
-    println("  stack seg: %x", frame->ss);
+    kprintln("Exception16: x87 floating-point");
+    kprintln("  instruction pointer: %x", frame->rip);
+    kprintln("  code seg: %x", frame->cs);
+    kprintln("  rflags: %d", frame->rflags);
+    kprintln("  stack pointer: %x", frame->rsp);
+    kprintln("  stack seg: %x", frame->ss);
     __asm__("hlt");
 }
 
 __attribute__((interrupt))
 static void exc17 (struct interrupt_frame* frame, uint64_t err_code) {
-    println("Exception15: alignment_check");
-    println("  instruction pointer: %x", frame->rip);
-    println("  code seg: %x", frame->cs);
-    println("  rflags: %d", frame->rflags);
-    println("  stack pointer: %x", frame->rsp);
-    println("  stack seg: %x", frame->ss);
-    println("  err_code: %x", err_code);
+    kprintln("Exception15: alignment_check");
+    kprintln("  instruction pointer: %x", frame->rip);
+    kprintln("  code seg: %x", frame->cs);
+    kprintln("  rflags: %d", frame->rflags);
+    kprintln("  stack pointer: %x", frame->rsp);
+    kprintln("  stack seg: %x", frame->ss);
+    kprintln("  err_code: %x", err_code);
     __asm__("hlt");
 }
 
 __attribute__((interrupt))
 static void exc18 (struct interrupt_frame* frame) {
-    println("Exception18: machine_check");
-    println("  instruction pointer: %x", frame->rip);
-    println("  code seg: %x", frame->cs);
-    println("  rflags: %d", frame->rflags);
-    println("  stack pointer: %x", frame->rsp);
-    println("  stack seg: %x", frame->ss);
+    kprintln("Exception18: machine_check");
+    kprintln("  instruction pointer: %x", frame->rip);
+    kprintln("  code seg: %x", frame->cs);
+    kprintln("  rflags: %d", frame->rflags);
+    kprintln("  stack pointer: %x", frame->rsp);
+    kprintln("  stack seg: %x", frame->ss);
     __asm__("hlt");
 }
 
 __attribute__((interrupt))
 static void exc19 (struct interrupt_frame* frame) {
-    println("Exception19: simd_floating_point");
-    println("  instruction pointer: %x", frame->rip);
-    println("  code seg: %x", frame->cs);
-    println("  rflags: %d", frame->rflags);
-    println("  stack pointer: %x", frame->rsp);
-    println("  stack seg: %x", frame->ss);
+    kprintln("Exception19: simd_floating_point");
+    kprintln("  instruction pointer: %x", frame->rip);
+    kprintln("  code seg: %x", frame->cs);
+    kprintln("  rflags: %d", frame->rflags);
+    kprintln("  stack pointer: %x", frame->rsp);
+    kprintln("  stack seg: %x", frame->ss);
     __asm__("hlt");
 }
 

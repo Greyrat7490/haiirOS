@@ -22,13 +22,13 @@ static void keyboard_handler(struct interrupt_frame* frame) {
     (void)frame;
 
     disable_interrupts();
-    
+
     static uint8_t seq = 0;
 
     int scancode = inb(0x60);
     enum keystate state;
-    
-    if (scancode == 0xe0) 
+
+    if (scancode == 0xe0)
         seq = 1;
     else {
         if(scancode > 0x80)
@@ -42,10 +42,10 @@ static void keyboard_handler(struct interrupt_frame* frame) {
         }
 
         if (state == KEY_PRESSED) {
-            set_color(BLACK, CYAN);
-            printf("%c", scancode_to_ascii(scancode));
+            kset_color(BLACK, CYAN);
+            kprintf("%c", scancode_to_ascii(scancode));
         }
-    }    
+    }
 
     outb(0x20, 0x20);
 
