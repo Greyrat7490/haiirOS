@@ -31,10 +31,44 @@ static void printByte(uint8_t byte) {
     if (byte == '\0')
         return;
                 //LF            //CR
-    else if (byte == '\n' || byte == '\r') {
+    else if (byte == '\n' || byte == '\r') {    // new line
         console.x = 0;
         console.y++;
-    } else {
+    }
+
+    else if (byte == '\t')                      // tab
+        console.x += 4;
+
+    else if (byte == '\b') {                    // backspace
+        if (console.x == 0) {
+            if (console.y == 0)
+                console.y = console.height - 1;
+            else
+                console.y--;
+
+            console.x = console.width - 1;
+
+            // go back to the line break
+            while ((vga_buffer->buffer[console.y][console.x] & 0xff) == 0) {
+                if (console.x >= console.width) {
+                    if ((vga_buffer->buffer[console.y][0] & 0xff) == 0) {
+                        console.x = 0;
+                        return;
+                    }
+
+                    console.y--;
+                    console.x = console.width - 1;
+                }
+
+                console.x--;
+            }
+        } else
+            console.x--;
+
+        vga_buffer->buffer[console.y][console.x] = console.color << 8;
+    }
+
+    else {
         vga_buffer->buffer[console.y][console.x] = console.color << 8 | byte;
         console.x++;
     }

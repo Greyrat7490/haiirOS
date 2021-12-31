@@ -31,7 +31,7 @@ void select_keyboard_layout(enum keyboard_layouts layout) {
 char scancode_to_ascii(uint8_t scancode) {
     enum keycode key = keyboard.keycodes[scancode];
 
-    if ((key <= 90 && key >= 27) || (key <= 13 && key >= 8))
+    if ((key <= 90 && key > 27) || (key <= 13 && key >= 8))
         return (char)key;
     else if (key > 90 && key < 104)
         return (char)keyboard.oem_table[(int)key - 91];
