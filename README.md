@@ -7,7 +7,7 @@
 ## Support for
 
 * x86_64
-* Intel
+* Intel CPU
 * Legacy boot (enable CSM if you have UEFI)
 ---
 * Maybe support for AMD
@@ -29,6 +29,7 @@
   * [x] create page tables
   * [x] mapping
   * [ ] frame allocator (really basic)
+    * [ ] use memory map
   * [ ] heap allocation
 * [x] Error handling
   * [x] exceptions
@@ -36,6 +37,23 @@
   * [x] print
   * [x] keyboard input
 * [ ] Basic syscalls
+  * [x] write
+  * [ ] exit
+  * [ ] mmap
+  * [ ] sched_yield
+  * [ ] fork
+  * [ ] open
+  * [ ] read
+  * [ ] close
+  * [ ] shutdown
+  * [ ] restart
+  * [ ] kill
+  * [ ] getcwd
+  * [ ] mkdir
+  * [ ] rmdir
+  * [ ] rename
+  * [ ] pause
+  * [ ] nanosleep
 
 ---
 
