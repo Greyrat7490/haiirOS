@@ -46,10 +46,11 @@ static inline void syscall4(uint64_t num, uint64_t arg1, uint64_t arg2, uint64_t
         return;
 
     __asm__ volatile (
+        "mov %4, %%r10\n"
         "syscall"
         :
-        : "a"(num), "D"(arg1), "S"(arg2), "d"(arg3), "c"(arg4)
-        : "r11" // no need to put rcx in the clobber list because rcx is already as input declared
+        : "a"(num), "D"(arg1), "S"(arg2), "d"(arg3), "r"(arg4)
+        : "rcx", "r10", "r11"
     );
 }
 

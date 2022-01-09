@@ -4,21 +4,6 @@ section .text
 
 global jump_usermode
 global enable_syscalls
-global flush_tss
-
-; GDT_KERNEL_NULL 0x0
-; GDT_KERNEL_CODE 0x8
-; GDT_KERNEL_DATA 0x10
-; GDT_USER_NULL 0x18
-; GDT_USER_DATA 0x20
-; GDT_USER_CODE 0x28
-; GDT_TSS 0x30
-
-
-flush_tss:
-    mov ax, 0x30                        ; requested privilege level is 0 (bits 0 and 1 are 0)
-    ltr ax
-    ret
 
 enable_syscalls:
     cli
@@ -65,24 +50,29 @@ jump_usermode:
     o64 sysret                          ; o64 to keep in long mode
 
 syscall_entry:
-    cli
-    mov rbx, rsp                        ; save user stack
+    ; save important registers
+    push rcx
+    push r11
+
+    mov rbx, rsp        ; save user stack
     mov rsp, tmp_stack
     sti
- 
-    extern syscall_table
-    mov rax, [syscall_table + rax * 8]  ; look into syscall table
-    call rax                            ; call the right syscall function
 
-    ; go back in usermode
+    extern syscall_table
+    mov rax, [syscall_table + rax * 8]
+    call rax
+
+    ; go back (in usermode)
+    cli
     mov rsp, rbx
-    mov r11, (1 << 9)                   ; enable interrupts
+    pop r11
+    pop rcx
+    mov r11, (1 << 9)   ; enable interrupts
     o64 sysret 
  
 
-section .bss
-
 ; temporary (kernel)stack for syscalls
+section .bss
 align 4096
     resb 4096
 tmp_stack:

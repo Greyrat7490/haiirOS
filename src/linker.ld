@@ -27,7 +27,7 @@ SECTIONS {
         *(.text .text.*)
         . = ALIGN(4K);
     }
-    
+
     .bss : {
         *(.bss)
         . = ALIGN(4K);
