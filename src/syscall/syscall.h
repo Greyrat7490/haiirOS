@@ -59,4 +59,8 @@ static inline void write(uint64_t fd, const char* buffer) {
     syscall2(SYSCALL_WRITE, fd, (uint64_t) buffer);
 }
 
+static inline void sched_yield(void) {
+    syscall0(SYSCALL_SCHED_YIELD);
+}
+
 #endif // H_SYSCALL

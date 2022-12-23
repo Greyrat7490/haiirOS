@@ -4,15 +4,26 @@
 
 extern void jump_usermode(uint64_t usr_stack_top, uint64_t usr_func_addr, uint64_t pml4_addr);
 
-// for now only one task
-static TCB_t s_tasks[1];
+#define MAX_TASKS 10
 
+static TCB_t s_tasks[MAX_TASKS];
+
+static uint64_t s_cur_task = 0;
+static uint64_t s_tasks_count = 0;
 
 void add_tcb(TCB_t task) {
-    s_tasks[0] = task;
+    if (s_tasks_count >= MAX_TASKS) {
+        kprintln("only 10 tasks max are allowed yet");
+        return;
+    }
+
+    s_tasks[s_tasks_count] = task;
+    s_tasks_count++;
 }
 
-void start_scheduler() {
+void start_scheduler(void) {
+    kprintln("start scheduler...");
+
     kprintln("func_addr:  %x", s_tasks[0].user_func);
     kprintln("pml4_addr:  %x", s_tasks[0].virt_addr_space);
     kprintln("stack_addr: %x", s_tasks[0].user_stack);
@@ -22,15 +33,17 @@ void start_scheduler() {
         return;
     }
 
-    kprintln("going into user mode...");
     jump_usermode(s_tasks[0].user_stack, s_tasks[0].user_func, s_tasks[0].virt_addr_space);
 }
 
-// only one task so far so instead just idle
-void switch_task() {
-    kprintln("next task... (no other task so idle)");
-    // TODO: syscalls in syscalls don't work
-    // syscall(SYSCALL_WRITE);
+void switch_task(void) {
+    kprintln("next task...");
 
-    while(1){};
+    s_cur_task++;
+    if (s_cur_task >= MAX_TASKS || s_tasks[s_cur_task].user_func == 0x0) {
+        kprintln("no tasks left...");
+        while(1) __asm__("hlt");
+    }
+
+    jump_usermode(s_tasks[s_cur_task].user_stack, s_tasks[s_cur_task].user_func, s_tasks[s_cur_task].virt_addr_space);
 }

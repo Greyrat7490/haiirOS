@@ -5,7 +5,7 @@
 #include "interrupt/idt.h"
 
 #include "example_tasks/err_task1.h"
-#include "example_tasks/task1.h"
+#include "example_tasks/simple.h"
 
 void kernel_main(uint64_t boot_info_addr) {
     kclear_screen();
@@ -41,6 +41,7 @@ void kernel_main(uint64_t boot_info_addr) {
 
     // add_task("task1 causes err", (uint64_t) &err_task);
     add_task("task1", (uint64_t) &task1);
+    add_task("task2", (uint64_t) &task2);
 
     start_scheduler();
     // --------------------------------------------------
