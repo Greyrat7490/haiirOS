@@ -13,7 +13,7 @@ bootloader_start:
 
     call enable_paging
     lgdt [gdt64.pointer]
-    
+
     pop ebx
     ; far jump to switch to long mode
     jmp gdt64.code:long_mode_entry
@@ -64,7 +64,7 @@ IST:
     dw 0            ; reserved
     dw 0            ; IO-map addr
 TSS_SIZE: equ $ - TSS64 - 1
-    
+
 global tss_pointer
 tss_pointer: dq TSS64
 

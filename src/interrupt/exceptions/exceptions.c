@@ -172,7 +172,7 @@ static void exc14 (struct interrupt_frame* frame, uint64_t err_code ) {
     kprintln("  stack pointer: %x", frame->rsp);
     kprintln("  stack seg: %x", frame->ss);
     kprintln("  err_code: %x", err_code);
- 
+
     uint64_t addr = 0;
     __asm__ (
         "mov %%cr2, %%rax\n" // cr2 -> rax
@@ -181,7 +181,7 @@ static void exc14 (struct interrupt_frame* frame, uint64_t err_code ) {
         : // no input
         : "%rax"
     );
-    
+
     kprintln( "  at virt_addr: %x", addr );
 
     __asm__("hlt");
@@ -251,7 +251,7 @@ static void exc19 (struct interrupt_frame* frame) {
 //     println("  stack pointer: %x", frame->rsp);
 //     println("  stack seg: %x", frame->ss);
 // }
-// 
+//
 // __attribute__((interrupt))
 // static void exc21 (struct interrupt_frame* frame) {
 //     println("Exception21: reserved");
@@ -285,7 +285,7 @@ void init_exceptions(void) {
     init_gate(17, (uint64_t) exc17, CODE_SEG, GATE_PRESENT | INTERRUPT_GATE, IST_NONE);
     init_gate(18, (uint64_t) exc18, CODE_SEG, GATE_PRESENT | INTERRUPT_GATE, IST_NONE);
     init_gate(19, (uint64_t) exc19, CODE_SEG, GATE_PRESENT | INTERRUPT_GATE, IST_NONE);
-    
+
     for (uint64_t i = 20; i < 31; i++)
         init_gate(i, (uint64_t) interrupt_handler, CODE_SEG, GATE_PRESENT | INTERRUPT_GATE, IST_NONE);
 }

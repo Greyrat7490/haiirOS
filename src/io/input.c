@@ -15,7 +15,7 @@ void select_keyboard_layout(enum keyboard_layouts layout) {
 
         for (uint8_t i = 0; i < 255; i++)
             keyboard.keycodes[i] = qwertz_keycodes[i];
-    
+
         for (uint8_t i = 0; i < 13; i++)
             keyboard.oem_table[i] = qwertz_oem_table[i];
 

@@ -52,7 +52,7 @@ enum keycode {
     KEY_CODE_7,
     KEY_CODE_8,
     KEY_CODE_9,
-    
+
     // 58 - 64 undefined
 
     // same as ascii
@@ -133,7 +133,7 @@ enum keycode {
     KEY_CODE_END,
     KEY_CODE_PAGE_UP,
     KEY_CODE_PAGE_DOWN,
-    
+
     KEY_CODE_UP,
     KEY_CODE_DOWN,
     KEY_CODE_LEFT,

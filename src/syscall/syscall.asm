@@ -68,8 +68,8 @@ syscall_entry:
     pop r11
     pop rcx
     mov r11, (1 << 9)   ; enable interrupts
-    o64 sysret 
- 
+    o64 sysret
+
 
 ; temporary (kernel)stack for syscalls
 section .bss

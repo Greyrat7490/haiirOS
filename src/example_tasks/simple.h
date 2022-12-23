@@ -1,5 +1,5 @@
 #ifndef H_TASK_SIMPLE
-#define H_TASK_SIMPLE 
+#define H_TASK_SIMPLE
 
 #include "syscall/syscall.h"
 

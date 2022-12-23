@@ -283,15 +283,15 @@ void map_user_frame(uint64_t* pml4_table, hPage page, hFrame frame, PageFlags fl
 
 uint64_t* create_user_pml4(void) {
     PML4Table* pml4_addr = (PML4Table*) alloc_frame().start_addr;
-    
+
     map_frame(get_hPage((uint64_t) pml4_addr), get_hFrame((uint64_t) pml4_addr), Present | Writeable | User);
-    
+
     for (uint16_t i = 1; i < 512; i++)
         pml4_addr->pdp_tables[i] = 0x0;
 
     // for interrupts, exceptions, syscalls and rest of the jump_usermode function (and more)
     pml4_addr->pdp_tables[0] = s_pml4_table->pdp_tables[0];
-   
+
     return (uint64_t*) pml4_addr;
 }
 
