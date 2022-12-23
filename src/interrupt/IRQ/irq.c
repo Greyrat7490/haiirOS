@@ -1,8 +1,6 @@
 #include "irq.h"
-
 #include "io/io.h"
 #include "io/input.h"
-
 #include "interrupt/idt.h"
 #include "interrupt/ISR/isr.h"
 
@@ -12,7 +10,6 @@ __attribute__ ((interrupt))
 static void timer_handler(struct interrupt_frame* frame) {
     (void)frame;
 
-    // printf(".");
     outb(0x20, 0x20); // end of interrupt (EOI)
 }
 
@@ -52,7 +49,7 @@ static void keyboard_handler(struct interrupt_frame* frame) {
     enable_interrupts();
 }
 
-void init_irq() {
+void init_irq(void) {
     // remap the PIC --------------------------------------------------------
     // TODO: io_wait()
     outb(0x20, 0x11); // init master PIC (ICW2 - ICW4)

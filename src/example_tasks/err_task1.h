@@ -3,7 +3,7 @@
 
 #include "syscall.h"
 
-void err_task() {
+void err_task(void) {
     write(0, "test1");
     write(0, "test2");
     write(0, "test3");
@@ -61,7 +61,7 @@ void err_task() {
     write(0, "test55");
     write(0, "test56");
     write(0, "test57");
-    
+
     while(1){}
 }
 

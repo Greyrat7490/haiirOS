@@ -264,7 +264,7 @@ static void exc19 (struct interrupt_frame* frame) {
 
 
 
-void init_exceptions() {
+void init_exceptions(void) {
     init_gate(0,  (uint64_t) exc0,  CODE_SEG, GATE_PRESENT | INTERRUPT_GATE, IST_NONE);
     init_gate(1,  (uint64_t) exc1,  CODE_SEG, GATE_PRESENT | INTERRUPT_GATE, IST_NONE);
     init_gate(2,  (uint64_t) exc2,  CODE_SEG, GATE_PRESENT | INTERRUPT_GATE, IST_NO_MASKABLE_INT);

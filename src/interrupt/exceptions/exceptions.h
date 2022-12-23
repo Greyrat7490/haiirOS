@@ -3,6 +3,6 @@
 
 #include "types.h"
 
-void init_exceptions();
+void init_exceptions(void);
 
 #endif // H_EXCEPTIONS

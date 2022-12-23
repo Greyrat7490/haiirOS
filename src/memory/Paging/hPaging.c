@@ -80,7 +80,7 @@ static void flush_TLB(void* m) {
     __asm__ volatile ("invlpg (%0)" : : "r"(m) : "memory");
 }
 
-static uint64_t* get_temp_entry() {
+static uint64_t* get_temp_entry(void) {
     const uint64_t virt_addr = 0x400000;
 
     const uint16_t i1 = get_lv1_index(virt_addr);
@@ -206,7 +206,7 @@ static void create_missing_tables(uint64_t* entry, hPage page, hFrame frame, Pag
 }
 
 
-void init_paging() {
+void init_paging(void) {
     uint64_t addr;
 
      __asm__ (
@@ -281,7 +281,7 @@ void map_user_frame(uint64_t* pml4_table, hPage page, hFrame frame, PageFlags fl
     map(pml4_table, page, frame, flags);
 }
 
-uint64_t* create_user_pml4() {
+uint64_t* create_user_pml4(void) {
     PML4Table* pml4_addr = (PML4Table*) alloc_frame().start_addr;
     
     map_frame(get_hPage((uint64_t) pml4_addr), get_hFrame((uint64_t) pml4_addr), Present | Writeable | User);
@@ -331,7 +331,7 @@ void show_entries(uint16_t ptEntries, uint16_t ptTables) {
 // 0x2000       -> 0xb8000
 // 0x800000     -> 0x3000
 // 0xfffffff000 -> 0xfff000
-void test_mapping() {
+void test_mapping(void) {
     kclear_screen();
     // fixed
     // println("**<- flush_TLB clears the first two fields (first 32bit) of the console");

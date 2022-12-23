@@ -10,12 +10,12 @@ static void write_syscall(uint64_t fd, const char* buffer) {
         kprintln("only stdout is supported so far");
 }
 
-static void test_syscall() {
+static void test_syscall(void) {
     kset_color(BLACK, WHITE);
     kprintln("test syscall");
 }
 
-static void sched_yield_syscall() {
+static void sched_yield_syscall(void) {
     kset_color(BLACK, WHITE);
     kprintln("sched_yield syscall");
     switch_task();

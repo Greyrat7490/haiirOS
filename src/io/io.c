@@ -179,7 +179,7 @@ void kset_color(uint8_t bg, uint8_t fg) {
     console.color = bg << 4 | fg;
 }
 
-void kclear_screen() {
+void kclear_screen(void) {
     uint16_t field = console.color << 8;
 
     for (uint8_t y = 0; y < console.height; y++)

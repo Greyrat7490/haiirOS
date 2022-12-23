@@ -17,8 +17,7 @@ struct IDT_descr {
     uint32_t zero;
 };
 
-typedef struct
-{
+typedef struct {
     struct IDT_descr entries[256];
 } IDT;
 
@@ -37,7 +36,7 @@ void init_gate(uint8_t idt_index, uint64_t base, uint16_t selector, uint8_t type
     idt.entries[idt_index].ist = ist;
 }
 
-void init_idt() {
+void init_idt(void) {
     disable_interrupts();
 
     init_irq();

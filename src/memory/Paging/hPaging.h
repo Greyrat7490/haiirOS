@@ -17,11 +17,11 @@ typedef enum {
     Global = 1 << 8
 } PageFlags;
 
-void init_paging();
+void init_paging(void);
 
 void map_frame(hPage page, hFrame frame, PageFlags flags);
 void map_user_frame(uint64_t* pml4_table, hPage page, hFrame frame, PageFlags flags);
-uint64_t* create_user_pml4();
+uint64_t* create_user_pml4(void);
 
 uint64_t to_phys(uint64_t virt_addr);
 uint64_t to_usr_phys(uint64_t* pml4_table, uint64_t virt_addr);
@@ -29,7 +29,7 @@ uint64_t to_usr_phys(uint64_t* pml4_table, uint64_t virt_addr);
 bool is_addr_present(uint64_t virt_addr);
 bool is_usr_addr_present(uint64_t* pml4_table, uint64_t virt_addr);
 
-void test_mapping();
+void test_mapping(void);
 void show_entries(uint16_t ptEntries, uint16_t ptTables);
 
 #endif

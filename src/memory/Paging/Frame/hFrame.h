@@ -9,7 +9,7 @@ typedef struct
 } hFrame;
 
 hFrame get_hFrame(uint64_t containing_addr);
-hFrame alloc_frame();
-uint64_t get_next_frame_addr();
+hFrame alloc_frame(void);
+uint64_t get_next_frame_addr(void);
 
 #endif

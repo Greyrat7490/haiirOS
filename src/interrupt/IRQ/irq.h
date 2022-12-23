@@ -3,6 +3,6 @@
 
 #include "types.h"
 
-void init_irq();
+void init_irq(void);
 
 #endif // H_IRQ

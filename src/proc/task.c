@@ -27,16 +27,16 @@ struct tss {
 typedef struct tss tss_t;
 
 extern tss_t* tss_pointer;
-extern void flush_tss();
+extern void flush_tss(void);
 extern uint64_t kernel_stack;
-extern void enable_syscalls();
+extern void enable_syscalls(void);
 
-void init_tss() {
+void init_tss(void) {
     tss_pointer->rsp0 = kernel_stack;
     flush_tss();
 }
 
-void init_syscalls() {
+void init_syscalls(void) {
     enable_syscalls();
 }
 

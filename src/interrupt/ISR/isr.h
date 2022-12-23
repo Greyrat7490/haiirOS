@@ -13,7 +13,7 @@
 #define TRAP_GATE 0xf
 #define TASK_GATE 0x5
 
-#define DPL_KERNEL 0 // Descriptor Privilege Level( DPL )
+#define DPL_KERNEL 0 // Descriptor Privilege Level (DPL)
 #define GATE_PRESENT 1 << 7
 
 
@@ -43,13 +43,12 @@ static inline uint8_t inb(uint16_t port) {
     return res;
 }
 
-static inline void enable_interrupts() {
+static inline void enable_interrupts(void) {
     __asm__ ("sti");
 }
 
-static inline void disable_interrupts() {
+static inline void disable_interrupts(void) {
     __asm__ ("cli");
 }
 
 #endif // H_ISR
-

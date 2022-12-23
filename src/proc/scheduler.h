@@ -13,7 +13,7 @@ typedef struct TaskControlBlock {
 } TCB_t;
 
 void add_tcb(TCB_t task);
-void start_scheduler();
-void switch_task();
+void start_scheduler(void);
+void switch_task(void);
 
 #endif // H_SCHEDULER
