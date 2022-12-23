@@ -40,7 +40,7 @@
   * [x] write
   * [ ] exit
   * [ ] mmap
-  * [ ] sched_yield
+  * [x] sched_yield
   * [ ] fork
   * [ ] open
   * [ ] read
@@ -84,7 +84,7 @@
   * install `gcc` (should already be installed) (C compiler)
   * install `make` (run Makefile / automation)
 * Testing/Debugging:
-  * install `qemu` (virtual-machine)
+  * install `qemu`/`qemu-desktop` (virtual-machine)
 
 ---
 
