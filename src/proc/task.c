@@ -53,13 +53,17 @@ void add_task(const char* task_name, uint64_t func_addr) {
     uint64_t user_func_addr = 0x10000010000 + (func_addr & 0xfff);
     map_user_frame(user_pml4, get_hPage(user_func_addr), get_hFrame(func_addr), Present | Writeable | User);
 
-    // string literales are stored 64KiB after the user function for some reason (TODO: why?)
-    uint64_t read_only_seg_phys = func_addr + 0x10000;
-    uint64_t read_only_seg_virt = 0x10000010000 + (func_addr & 0xfff) + 0x10000;
-    map_user_frame(user_pml4, get_hPage(read_only_seg_virt), get_hFrame(read_only_seg_phys), Present | Writeable | User);
+    // map .rodata/.data (after .text)    (.text ~64KiB (release) / .text ~57KiB (debug))
+    // only tmp until executable instead of function
+#ifdef DEBUG
+    uint64_t text_seg_size = 0xe000;
+#else
+    uint64_t text_seg_size = 0x10000;
+#endif
 
-    uint64_t switch_task_addr = 0x10000000000 + ((uint64_t) switch_task & 0xfff);
-    map_user_frame(user_pml4, get_hPage(switch_task_addr), get_hFrame((uint64_t) switch_task), Present | Writeable | User);
+    uint64_t data_seg_phys = (func_addr & ~0xfff) + text_seg_size;
+    uint64_t data_seg_virt = 0x10000010000 + text_seg_size;                                 // both data and rodata writeable (no separation)
+    map_user_frame(user_pml4, get_hPage(data_seg_virt), get_hFrame(data_seg_phys), Present | Writeable | User);
 
     add_tcb((TCB_t) {
         .name = task_name,
