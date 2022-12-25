@@ -3,6 +3,8 @@
 
 #include "types.h"
 
+#define FRAME_SIZE 4096     // 4KiB
+
 typedef struct
 {
     uint64_t start_addr;

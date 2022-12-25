@@ -269,6 +269,7 @@ static void map(uint64_t* pml4_table, hPage page, hFrame frame, PageFlags flags)
             return;
         }
 
+        // TODO set present of parent table entries 
         kprintln("A Page directory is not present -> could not get pt entry");
     }
 }

@@ -15,5 +15,6 @@ typedef struct TaskControlBlock {
 void add_tcb(TCB_t task);
 void start_scheduler(void);
 void switch_task(void);
+uint64_t get_addr_space(void);
 
 #endif // H_SCHEDULER

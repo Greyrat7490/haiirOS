@@ -5,9 +5,23 @@
 #include "io/io.h"
 
 typedef enum {
-    SYSCALL_WRITE = 0,
-    SYSCALL_TEST,
-    SYSCALL_SCHED_YIELD,
+    SYS_WRITE = 0,
+    SYS_OPEN,
+    SYS_READ,
+    SYS_CLOSE,
+    SYS_EXIT,
+    SYS_SCHED_YIELD,
+    SYS_MMAP,
+    SYS_FORK,
+    SYS_EXECVE,
+    SYS_GETPID,
+    SYS_KILL,
+    SYS_GETCWD,
+    SYS_MKDIR,
+    SYS_RMDIR,
+    SYS_RENAME,
+    SYS_PAUSE,
+    SYS_NANO_SLEEP,
 
     SYSCALLS_COUNT
 } syscall_num;
@@ -54,13 +68,33 @@ static inline void syscall4(uint64_t num, uint64_t arg1, uint64_t arg2, uint64_t
     );
 }
 
+static inline void syscall6(uint64_t num, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5, uint64_t arg6) {
+    if (num >= SYSCALLS_COUNT)
+        return;
+
+    __asm__ volatile (
+        "mov %4, %%r10\n"
+        "mov %5, %%r8\n"
+        "mov %6, %%r9\n"
+        "syscall"
+        :
+        : "a"(num), "D"(arg1), "S"(arg2), "d"(arg3), "r"(arg4), "r"(arg5), "r"(arg6)
+        : "rcx", "r8", "r9", "r10", "r11"
+    );
+}
+
 
 static inline void write(uint64_t fd, const char* buffer) {
-    syscall2(SYSCALL_WRITE, fd, (uint64_t) buffer);
+    syscall2(SYS_WRITE, fd, (uint64_t) buffer);
 }
 
 static inline void sched_yield(void) {
-    syscall0(SYSCALL_SCHED_YIELD);
+    syscall0(SYS_SCHED_YIELD);
 }
+
+static inline void mmap(void* addr, uint64_t len, int prot, int flags, int fd, int64_t offset) {
+    syscall6(SYS_MMAP, (uint64_t)addr, len, prot, flags, fd, offset);
+}
+
 
 #endif // H_SYSCALL

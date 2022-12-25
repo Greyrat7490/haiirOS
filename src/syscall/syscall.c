@@ -1,5 +1,7 @@
 #include "syscall.h"
 #include "proc/scheduler.h"
+#include "time.h"
+#include "memory/Paging/hPaging.h"
 
 static void write_syscall(uint64_t fd, const char* buffer) {
     kset_color(BLACK, WHITE);
@@ -10,19 +12,153 @@ static void write_syscall(uint64_t fd, const char* buffer) {
         kprintln("only stdout is supported so far");
 }
 
-static void test_syscall(void) {
-    kset_color(BLACK, WHITE);
-    kprintln("test syscall");
-}
-
 static void sched_yield_syscall(void) {
-    kset_color(BLACK, WHITE);
-    kprintln("sched_yield syscall");
     switch_task();
 }
 
+static void open_syscall(const char* file, int flags, uint32_t mode) {
+    (void)file;
+    (void)flags;
+    (void)mode;
+
+    kset_color(BLACK, WHITE);
+    kprintln("open syscall");
+}
+
+static void read_syscall(uint32_t fd, char* buffer, uint64_t count) {
+    (void)fd;
+    (void)buffer;
+    (void)count;
+
+    kset_color(BLACK, WHITE);
+    kprintln("read syscall");
+}
+
+static void close_syscall(uint32_t fd) {
+    (void)fd;
+
+    kset_color(BLACK, WHITE);
+    kprintln("close syscall");
+}
+
+static void exit_syscall(int err_code) {
+    (void)err_code;
+
+    kset_color(BLACK, WHITE);
+    kprintln("exit syscall");
+}
+
+static void mmap_syscall(void* addr, uint64_t len, ProtFlags prot, int flags, int fd, int64_t offset) {
+    (void)flags;        // TODO: more flags default now: MAP_PRIVATE, MAP_ANOM
+    (void)fd;           // needed for files
+    (void)offset;       // needed for files
+
+    uint64_t pml4_table = get_addr_space();
+
+    PageFlags pageFlags = User | (prot & 3);
+    if ((prot & PROT_EXEC) == 0) { pageFlags |= ExecDisable; }
+
+    uint32_t pagesCount = len / PAGE_SIZE + 1;
+    for (uint32_t i = 0; i < pagesCount; i++) {
+        hFrame frame = alloc_frame();
+        hPage page = get_hPage((uint64_t)addr + i*PAGE_SIZE);
+
+        map_user_frame((uint64_t*) pml4_table, page, frame, pageFlags);
+    }
+}
+
+static int fork_syscall(void) {
+    kset_color(BLACK, WHITE);
+    kprintln("fork syscall");
+    return 0;
+}
+
+static int execve_syscall(const char* path, const char** argv, const char* envp) {
+    (void)path;
+    (void)argv;
+    (void)envp;
+
+    kset_color(BLACK, WHITE);
+    kprintln("execve syscall");
+    return 0;
+}
+
+static int getpid_syscall(void) {
+    kset_color(BLACK, WHITE);
+    kprintln("getpid syscall");
+    return 0;
+}
+
+static void kill_syscall(int pid, int sig) {
+    (void)pid;
+    (void)sig;
+
+    kset_color(BLACK, WHITE);
+    kprintln("kill syscall");
+}
+
+static void getcwd_syscall(char* buffer, uint64_t size) {
+    (void)buffer;
+    (void)size;
+
+    kset_color(BLACK, WHITE);
+    kprintln("getcwd syscall");
+}
+
+static void mkdir_syscall(const char* path, uint32_t mode) {
+    (void)path;
+    (void)mode;
+
+    kset_color(BLACK, WHITE);
+    kprintln("mkdir syscall");
+}
+
+static void rmdir_syscall(const char* path) {
+    (void)path;
+
+    kset_color(BLACK, WHITE);
+    kprintln("rmdir syscall");
+}
+
+static void rename_syscall(const char* oldname, const char* newname) {
+    (void)oldname;
+    (void)newname;
+
+    kset_color(BLACK, WHITE);
+    kprintln("rename syscall");
+}
+
+static void pause_syscall(void) {
+    kset_color(BLACK, WHITE);
+    kprintln("pause syscall");
+}
+
+static void nano_sleep_syscall(timespec_t* req, timespec_t* rem) {
+    (void)req;
+    (void)rem;
+
+    kset_color(BLACK, WHITE);
+    kprintln("nano sleep syscall");
+}
+
+
+
 uint64_t syscall_table[SYSCALLS_COUNT] = {
-    [SYSCALL_WRITE]         = (uint64_t) &write_syscall,
-    [SYSCALL_TEST]          = (uint64_t) &test_syscall,
-    [SYSCALL_SCHED_YIELD]   = (uint64_t) &sched_yield_syscall,
+    [SYS_WRITE]         = (uint64_t) &write_syscall,
+    [SYS_SCHED_YIELD]   = (uint64_t) &sched_yield_syscall,
+    [SYS_OPEN]          = (uint64_t) &open_syscall,
+    [SYS_READ]          = (uint64_t) &read_syscall,
+    [SYS_CLOSE]         = (uint64_t) &close_syscall,
+    [SYS_EXIT]          = (uint64_t) &exit_syscall,
+    [SYS_MMAP]          = (uint64_t) &mmap_syscall,
+    [SYS_FORK]          = (uint64_t) &fork_syscall,
+    [SYS_EXECVE]        = (uint64_t) &execve_syscall,
+    [SYS_GETPID]        = (uint64_t) &getpid_syscall,
+    [SYS_KILL]          = (uint64_t) &kill_syscall,
+    [SYS_GETCWD]        = (uint64_t) &getcwd_syscall,
+    [SYS_MKDIR]         = (uint64_t) &mkdir_syscall,
+    [SYS_RMDIR]         = (uint64_t) &rmdir_syscall,
+    [SYS_RENAME]        = (uint64_t) &rename_syscall,
+    [SYS_PAUSE]         = (uint64_t) &pause_syscall,
+    [SYS_NANO_SLEEP]    = (uint64_t) &nano_sleep_syscall,
 };

@@ -47,3 +47,7 @@ void switch_task(void) {
 
     jump_usermode(s_tasks[s_cur_task].user_stack, s_tasks[s_cur_task].user_func, s_tasks[s_cur_task].virt_addr_space);
 }
+
+uint64_t get_addr_space(void) {
+    return s_tasks[s_cur_task].virt_addr_space;
+}

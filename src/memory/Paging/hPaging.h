@@ -5,17 +5,25 @@
 #include "Page/hPage.h"
 #include "Frame/hFrame.h"
 
+typedef uint64_t PageFlags;
+#define Present         1
+#define Writeable       (1 << 1)
+#define User            (1 << 2)
+#define WriteThrough    (1 << 3)
+#define DisableCache    (1 << 4)
+#define Accessed        (1 << 5)
+#define Dirty           (1 << 6)
+#define Huge            (1 << 7)
+#define Global          (1 << 8)
+#define ExecDisable     ((uint64_t)1 << 63)
+
 typedef enum {
-    Present = 1,
-    Writeable = 1 << 1,
-    User = 1 << 2,
-    WriteThrough = 1 << 3,
-    DisableCache = 1 << 4,
-    Accessed = 1 << 5,
-    Dirty = 1 << 6,
-    Huge = 1 << 7,
-    Global = 1 << 8
-} PageFlags;
+    PROT_READ   = 0x1,
+    PROT_WRITE  = 0x2,
+    PROT_EXEC   = 0x4,
+    PROT_NONE   = 0x0   // Page can not be accessed
+} ProtFlags;
+
 
 void init_paging(void);
 

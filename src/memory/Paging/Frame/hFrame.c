@@ -1,6 +1,5 @@
 #include "hFrame.h"
 
-static uint16_t FRAME_SIZE = 4096; //4KiB
 static uint64_t NEXT_FRAME = 0x800000;
 
 hFrame get_hFrame(uint64_t containing_addr) {
