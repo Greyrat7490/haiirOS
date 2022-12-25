@@ -23,9 +23,9 @@ CFLAGS += -Wall -Wextra -pedantic -nostdlib -Isrc -std=c11
 LDFLAGS := -m elf_x86_64 -nostdlib -T $(linker_script)
 
 
-.PHONY: all clean run release debug
+.PHONY: all clean run release debug build-debug
 
-all: $(debug_iso)
+all: build-debug
 
 clean:
 	rm -rf build
@@ -33,12 +33,14 @@ clean:
 release: CFLAGS += -O3
 release: $(release_iso)
 
-debug: CFLAGS += -ggdb -O0
-debug: $(debug_iso)
-	qemu-system-x86_64 -s -S $(debug_iso)
+build-debug: CFLAGS += -ggdb -Og -D DEBUG
+build-debug: $(debug_iso)
 
 run: release
 	qemu-system-x86_64 -hda $(release_iso)
+
+debug: build-debug
+	qemu-system-x86_64 -s -S $(debug_iso)
 
 # debug --------------------------------------------------
 $(debug_iso): $(debug_kernel) $(grub_cfg)
