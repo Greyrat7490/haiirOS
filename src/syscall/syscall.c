@@ -1,54 +1,63 @@
 #include "syscall.h"
-#include "proc/scheduler.h"
 #include "time.h"
+#include "io/io.h"
+#include "proc/scheduler.h"
 #include "memory/Paging/hPaging.h"
 
-static void write_syscall(uint64_t fd, const char* buffer) {
+static uint64_t write_syscall(uint64_t fd, const char* buffer) {
     kset_color(BLACK, WHITE);
 
-    if (fd == 0) // stdout
+    if (fd == 0) { // stdout
         kprintf("%s", buffer);
-    else
+        return 0;
+    } else {
         kprintln("only stdout is supported so far");
+        return -1;
+    }
 }
 
-static void sched_yield_syscall(void) {
+static int sched_yield_syscall(void) {
     switch_task();
+    return 0;
 }
 
-static void open_syscall(const char* file, int flags, uint32_t mode) {
+static uint64_t open_syscall(const char* file, int flags, uint32_t mode) {
     (void)file;
     (void)flags;
     (void)mode;
 
     kset_color(BLACK, WHITE);
     kprintln("open syscall");
+    return 0;
 }
 
-static void read_syscall(uint32_t fd, char* buffer, uint64_t count) {
+static uint64_t read_syscall(uint32_t fd, char* buffer, uint64_t count) {
     (void)fd;
     (void)buffer;
     (void)count;
 
     kset_color(BLACK, WHITE);
     kprintln("read syscall");
+    return 0;
 }
 
-static void close_syscall(uint32_t fd) {
+static uint64_t close_syscall(uint32_t fd) {
     (void)fd;
 
     kset_color(BLACK, WHITE);
     kprintln("close syscall");
+    return 0;
 }
 
-static void exit_syscall(int err_code) {
+static uint64_t exit_syscall(int err_code) {
     (void)err_code;
 
     kset_color(BLACK, WHITE);
     kprintln("exit syscall");
+    return 0;
 }
 
-static void mmap_syscall(void* addr, uint64_t len, ProtFlags prot, int flags, int fd, int64_t offset) {
+static void* mmap_syscall(void* addr, uint64_t len, ProtFlags prot, int flags, int fd, int64_t offset) {
     (void)flags;        // TODO: more flags default now: MAP_PRIVATE, MAP_ANOM
     (void)fd;           // needed for files
     (void)offset;       // needed for files
@@ -65,15 +74,17 @@ static void mmap_syscall(void* addr, uint64_t len, ProtFlags prot, int flags, in
 
         map_user_frame((uint64_t*) pml4_table, page, frame, pageFlags);
     }
+
+    return (void*)((uint64_t)addr & ~PAGE_SIZE);
 }
 
-static int fork_syscall(void) {
+static uint64_t fork_syscall(void) {
     kset_color(BLACK, WHITE);
     kprintln("fork syscall");
     return 0;
 }
 
-static int execve_syscall(const char* path, const char** argv, const char* envp) {
+static uint64_t execve_syscall(const char* path, const char** argv, const char* envp) {
     (void)path;
     (void)argv;
     (void)envp;
@@ -83,64 +94,75 @@ static int execve_syscall(const char* path, const char** argv, const char* envp)
     return 0;
 }
 
-static int getpid_syscall(void) {
+static uint64_t getpid_syscall(void) {
     kset_color(BLACK, WHITE);
     kprintln("getpid syscall");
     return 0;
 }
 
-static void kill_syscall(int pid, int sig) {
+static uint64_t kill_syscall(int pid, int sig) {
     (void)pid;
     (void)sig;
 
     kset_color(BLACK, WHITE);
     kprintln("kill syscall");
+    return 0;
 }
 
-static void getcwd_syscall(char* buffer, uint64_t size) {
+static uint64_t getcwd_syscall(char* buffer, uint64_t size) {
     (void)buffer;
     (void)size;
 
     kset_color(BLACK, WHITE);
     kprintln("getcwd syscall");
+    return 0;
 }
 
-static void mkdir_syscall(const char* path, uint32_t mode) {
+static uint64_t mkdir_syscall(const char* path, uint32_t mode) {
     (void)path;
     (void)mode;
 
     kset_color(BLACK, WHITE);
     kprintln("mkdir syscall");
+    return 0;
 }
 
-static void rmdir_syscall(const char* path) {
+static uint64_t rmdir_syscall(const char* path) {
     (void)path;
 
     kset_color(BLACK, WHITE);
     kprintln("rmdir syscall");
+    return 0;
 }
 
-static void rename_syscall(const char* oldname, const char* newname) {
+static uint64_t rename_syscall(const char* oldname, const char* newname) {
     (void)oldname;
     (void)newname;
 
     kset_color(BLACK, WHITE);
     kprintln("rename syscall");
+    return 0;
 }
 
-static void pause_syscall(void) {
+static uint64_t pause_syscall(void) {
     kset_color(BLACK, WHITE);
     kprintln("pause syscall");
+    return 0;
 }
 
-static void nano_sleep_syscall(timespec_t* req, timespec_t* rem) {
+static uint64_t nano_sleep_syscall(timespec_t* req, timespec_t* rem) {
     (void)req;
     (void)rem;
 
     kset_color(BLACK, WHITE);
     kprintln("nano sleep syscall");
+    return 0;
 }
 
+static uint64_t print_int_syscall(int64_t i) {
+    kprintln("%d", i);
+    return 0;
+}
 
 
 uint64_t syscall_table[SYSCALLS_COUNT] = {
@@ -161,4 +183,6 @@ uint64_t syscall_table[SYSCALLS_COUNT] = {
     [SYS_RENAME]        = (uint64_t) &rename_syscall,
     [SYS_PAUSE]         = (uint64_t) &pause_syscall,
     [SYS_NANO_SLEEP]    = (uint64_t) &nano_sleep_syscall,
+
+    [SYS_PRINT_INT]     = (uint64_t) &print_int_syscall,
 };

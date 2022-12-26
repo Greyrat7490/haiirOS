@@ -52,8 +52,9 @@ void add_task(const char* task_name, uint64_t func_addr) {
 
     uint64_t user_func_addr = 0x10000010000 + (func_addr & 0xfff);
     map_user_frame(user_pml4, get_hPage(user_func_addr), get_hFrame(func_addr), Present | Writeable | User);
+    map_user_frame(user_pml4, get_hPage(user_func_addr + PAGE_SIZE), get_hFrame(func_addr + PAGE_SIZE), Present | Writeable | User);
 
-    // map .rodata/.data (after .text)    (.text ~64KiB (release) / .text ~57KiB (debug))
+    // map .rodata/.data (after .text)    (.text ~65KiB (release) / .text ~57KiB (debug))
     // only tmp until executable instead of function
 #ifdef DEBUG
     uint64_t text_seg_size = 0xe000;
@@ -64,6 +65,7 @@ void add_task(const char* task_name, uint64_t func_addr) {
     uint64_t data_seg_phys = (func_addr & ~0xfff) + text_seg_size;
     uint64_t data_seg_virt = 0x10000010000 + text_seg_size;                                 // both data and rodata writeable (no separation)
     map_user_frame(user_pml4, get_hPage(data_seg_virt), get_hFrame(data_seg_phys), Present | Writeable | User);
+    map_user_frame(user_pml4, get_hPage(data_seg_virt + PAGE_SIZE), get_hFrame(data_seg_phys + PAGE_SIZE), Present | Writeable | User);
 
     add_tcb((TCB_t) {
         .name = task_name,
