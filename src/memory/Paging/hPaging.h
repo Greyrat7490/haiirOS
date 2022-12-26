@@ -15,7 +15,7 @@ typedef uint64_t PageFlags;
 #define Dirty           (1 << 6)
 #define Huge            (1 << 7)
 #define Global          (1 << 8)
-#define ExecDisable     ((uint64_t)1 << 63)
+#define ExecDisable     (1ull << 63)
 
 typedef enum {
     PROT_READ   = 0x1,

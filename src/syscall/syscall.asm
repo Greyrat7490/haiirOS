@@ -50,12 +50,29 @@ jump_usermode:
     o64 sysret                          ; o64 to keep in long mode
 
 syscall_entry:
-    ; save important registers
+    ; rcx contains user rip
+    ; r11 contains user rflags
+    ; clobbered regs!
+
+    ; save general registers    (TODO maybe simplifications are possible)
+    push rbx
     push rcx
+    push rdx
+    push rdi
+    push rsi
+    push rbp
+    push r8
+    push r9
+    push r10
     push r11
+    push r12
+    push r13
+    push r14
+    push r15
 
     mov rbx, rsp        ; save user stack
-    mov rsp, tmp_stack
+    mov rsp, kernel_syscall_stack
+    push rbx
     sti
 
     extern syscall_table
@@ -64,10 +81,26 @@ syscall_entry:
 
     ; go back (in usermode)
     cli
-    mov rsp, rbx
+    pop rsp             ; restore user stack
+
+    ; restore general registers
+    pop r15
+    pop r14
+    pop r13
+    pop r12
     pop r11
+    pop r10
+    pop r9
+    pop r8
+    pop rbp
+    pop rsi
+    pop rdi
+    pop rdx
     pop rcx
+    pop rbx
+
     mov r11, (1 << 9)   ; enable interrupts
+                        ; rax contains syscall return value
     o64 sysret
 
 
@@ -75,4 +108,4 @@ syscall_entry:
 section .bss
 align 4096
     resb 4096
-tmp_stack:
+kernel_syscall_stack:

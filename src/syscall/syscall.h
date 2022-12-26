@@ -30,13 +30,12 @@ typedef enum {
 static inline void syscall0(uint64_t num) {
     if (num >= SYSCALLS_COUNT)
         return;
-    // rax = syscall number
+    // important: rcx, r11 in clobber list
+    // gcc doesn't know rcx, r11 will be set by syscall (see Doc/objdump1-3)
+    // same for all other general purpose regs (therefore preserved in syscall_entry)
     __asm__ volatile ("syscall" : : "a"(num) : "rcx", "r11");
-    // rcx in the clobber list very important!!!
-    // otherwise gcc screws up with setting rax correctly (when optimization is enabled),
-    // because gcc doesn't know rcx will be set on syscall
-    // see Doc/objdump(1 - 3)
 }
+
 static inline void syscall1(uint64_t num, uint64_t arg1) {
     if (num >= SYSCALLS_COUNT)
         return;
