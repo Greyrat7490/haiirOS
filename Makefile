@@ -37,10 +37,10 @@ build-debug: CFLAGS += -ggdb -Og -D DEBUG
 build-debug: $(debug_iso)
 
 run: release
-	qemu-system-x86_64 -hda $(release_iso)
+	qemu-system-x86_64 -drive format=raw,file=$(release_iso)
 
 debug: build-debug
-	qemu-system-x86_64 -s -S $(debug_iso)
+	qemu-system-x86_64 -s -S -drive format=raw,file=$(debug_iso)
 
 # debug --------------------------------------------------
 $(debug_iso): $(debug_kernel) $(grub_cfg)
