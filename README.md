@@ -39,7 +39,7 @@
 * [ ] Basic syscalls
   * [x] write
   * [ ] exit
-  * [ ] mmap
+  * [x] mmap
   * [x] sched_yield
   * [ ] fork
   * [ ] open
