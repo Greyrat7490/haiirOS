@@ -8,15 +8,18 @@
 #include "example_tasks/simple.h"
 
 void kernel_main(uint64_t boot_info_addr) {
+    (void) boot_info_addr;
+
     kclear_screen();
     kset_color(BLACK, PINK);
 
     kprintln("%s to %s!", "Welcome", "haiirOS");
 
     // memory --------------------------------------------
-    hMemoryMap mmap = init_memory_map(boot_info_addr);
+    // TODO: replace multiboot2
+    // hMemoryMap mmap = init_memory_map(boot_info_addr);
 
-    print_memory_map(&mmap);
+    // print_memory_map(&mmap);
 
     init_paging();
     // --------------------------------------------------
@@ -40,6 +43,9 @@ void kernel_main(uint64_t boot_info_addr) {
     init_syscalls();
 
     // add_task("task1 causes err", (uint64_t) &err_task);
+
+    // TODO: fix global variables are not initialized correct
+    init();
     add_task("task1", (uint64_t) &task1);
     add_task("task2", (uint64_t) &task2);
 

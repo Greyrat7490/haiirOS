@@ -57,9 +57,9 @@ void add_task(const char* task_name, uint64_t func_addr) {
     // map .rodata/.data (after .text)    (.text ~65KiB (release) / .text ~57KiB (debug))
     // only tmp until executable instead of function
 #ifdef DEBUG
-    uint64_t text_seg_size = 0xe000;
+    uint64_t text_seg_size = 0x3900;
 #else
-    uint64_t text_seg_size = 0x10000;
+    uint64_t text_seg_size = 0x5900;
 #endif
 
     uint64_t data_seg_phys = (func_addr & ~0xfff) + text_seg_size;

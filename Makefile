@@ -5,7 +5,6 @@ release_kernel := build/release/$(project_name).bin
 debug_iso := build/debug/$(project_name).iso
 release_iso := build/release/$(project_name).iso
 
-linker_script := src/linker.ld
 asm_src := $(shell find src -name "*.asm")
 c_src := $(shell find src -name "*.c")
 grub_cfg := src/arch/x86_64/boot/grub.cfg
@@ -20,7 +19,7 @@ CFLAGS := -MD -ffreestanding -fno-stack-protector -z max-page-size=0x1000 -mgene
 CFLAGS += -mno-red-zone -mno-mmx -mno-sse -mno-sse2 -mno-sse3 -mno-3dnow
 CFLAGS += -Wall -Wextra -pedantic -nostdlib -Isrc -std=c11
 
-LDFLAGS := -m elf_x86_64 -nostdlib -T $(linker_script)
+LDFLAGS := -m elf_x86_64 -nostdlib
 
 
 .PHONY: all clean run release debug build-debug
@@ -43,13 +42,12 @@ debug: build-debug
 	qemu-system-x86_64 -s -S -drive format=raw,file=$(debug_iso)
 
 # debug --------------------------------------------------
-$(debug_iso): $(debug_kernel) $(grub_cfg)
+$(debug_iso): $(debug_kernel)
 	mkdir -p build/debug/iso/boot/grub
 	cp $(debug_kernel) build/debug/iso/boot/$(project_name).bin
-	cp $(grub_cfg) build/debug/iso/boot/grub
 	grub-mkrescue -o $(debug_iso) build/debug/iso
 
-$(debug_kernel): $(asm_debug_obj) $(linker_script) $(c_debug_obj)
+$(debug_kernel): $(asm_debug_obj) $(c_debug_obj)
 	ld $(asm_debug_obj) $(c_debug_obj) -o $(debug_kernel) $(LDFLAGS)
 
 build/debug/obj/asm/%.o: src/%.asm
@@ -61,13 +59,12 @@ build/debug/obj/c/%.o: src/%.c
 	gcc -c $< -o $@ $(CFLAGS)
 
 # release --------------------------------------------------
-$(release_iso): $(release_kernel) $(grub_cfg)
+$(release_iso): $(release_kernel)
 	mkdir -p build/release/iso/boot/grub
 	cp $(release_kernel) build/release/iso/boot/$(project_name).bin
-	cp $(grub_cfg) build/release/iso/boot/grub
 	grub-mkrescue -o $(release_iso) build/release/iso
 
-$(release_kernel): $(asm_release_obj) $(linker_script) $(c_release_obj)
+$(release_kernel): $(asm_release_obj) $(c_release_obj)
 	ld $(asm_release_obj) $(c_release_obj) -o $(release_kernel) $(LDFLAGS)
 
 build/release/obj/asm/%.o: src/%.asm

@@ -1,0 +1,3 @@
+[submodule "bloader"]
+	path = bloader
+	url = https://github.com/Greyrat7490/bloader

@@ -1,44 +1,31 @@
-global bootloader_start
-
-extern enable_paging
-extern long_mode_entry
+global _start
 
 section .text
-[BITS 32]
-bootloader_start:
+[BITS 64]
+_start:
     cli
 
-    mov esp, stack_top
-    push ebx
-
-    call enable_paging
+    mov rsp, kernel_stack
+    call set_tss
     lgdt [gdt64.pointer]
 
-    pop ebx
-    ; far jump to switch to long mode
-    jmp gdt64.code:long_mode_entry
+    ; start kernel ----------------------------
+    extern kernel_main
+    jmp kernel_main
 
-    hlt
-
-
-[BITS 64]
-global load_tss
-load_tss:
+set_tss:
     ; Load TSS descriptor into GDT ------------
     mov rdi, gdt64
     add rdi, gdt64.tss
     mov rax, TSS64
-    mov word [rdi + 2], ax      ; set base (15 - 0)
+    mov word [rdi+2], ax      ; set base (15 - 0)
     shr rax, 16
-    mov byte [rdi + 4], al      ; set base (23 - 16)
+    mov byte [rdi+4], al      ; set base (23 - 16)
     shr rax, 8
-    mov byte [rdi + 7], al      ; set base (31 - 24)
+    mov byte [rdi+7], al      ; set base (31 - 24)
     shr rax, 8
-    mov dword [rdi + 8], eax    ; set base (63 - 32)
+    mov dword [rdi+8], eax    ; set base (63 - 32)
     ; -----------------------------------------
-
-    ; reload gdt
-    lgdt [gdt64.pointer]
     ret
 
 
