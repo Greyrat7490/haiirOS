@@ -11,15 +11,8 @@ static TCB_t s_tasks[MAX_TASKS];
 static uint64_t s_cur_task = 0;
 static uint64_t s_tasks_count = 0;
 
-void init(void) {
-    s_cur_task = 0;
-    s_tasks_count = 0;
-}
 
 void add_tcb(TCB_t task) {
-    kprintln("%d", s_tasks_count);
-    kprintln("%x", &s_tasks_count);
-
     if (s_tasks_count >= MAX_TASKS) {
         kprintln("only 10 tasks max are allowed yet");
         return;

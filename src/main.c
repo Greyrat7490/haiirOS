@@ -43,9 +43,6 @@ void kernel_main(uint64_t boot_info_addr) {
     init_syscalls();
 
     // add_task("task1 causes err", (uint64_t) &err_task);
-
-    // TODO: fix global variables are not initialized correct
-    init();
     add_task("task1", (uint64_t) &task1);
     add_task("task2", (uint64_t) &task2);
 
