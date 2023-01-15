@@ -2,12 +2,13 @@ project_name := haiirOS
 
 debug_kernel := build/debug/$(project_name).bin
 release_kernel := build/release/$(project_name).bin
-debug_iso := build/debug/$(project_name).iso
-release_iso := build/release/$(project_name).iso
+debug_img := build/debug/$(project_name).img
+release_img := build/release/$(project_name).img
+
+bloader_img := build/bloader.img
 
 asm_src := $(shell find src -name "*.asm")
 c_src := $(shell find src -name "*.c")
-grub_cfg := src/arch/x86_64/boot/grub.cfg
 
 c_debug_obj := $(patsubst src/%.c, build/debug/obj/c/%.o, $(c_src))
 c_release_obj := $(patsubst src/%.c, build/release/obj/c/%.o, $(c_src))
@@ -30,22 +31,32 @@ clean:
 	rm -rf build
 
 release: CFLAGS += -O3
-release: $(release_iso)
+release: $(release_img)
 
 build-debug: CFLAGS += -ggdb -Og -D DEBUG
-build-debug: $(debug_iso)
+build-debug: $(debug_img)
 
 run: release
-	qemu-system-x86_64 -drive format=raw,file=$(release_iso)
+	qemu-system-x86_64 -drive format=raw,file=$(release_img)
 
 debug: build-debug
-	qemu-system-x86_64 -s -S -drive format=raw,file=$(debug_iso)
+	qemu-system-x86_64 -s -S -drive format=raw,file=$(debug_img)
+
+
+$(bloader_img):
+	mkdir build -p
+	cd bloader && make && cp build/bloader.img ../$(bloader_img) && cd ..
 
 # debug --------------------------------------------------
-$(debug_iso): $(debug_kernel)
-	mkdir -p build/debug/iso/boot/grub
-	cp $(debug_kernel) build/debug/iso/boot/$(project_name).bin
-	grub-mkrescue -o $(debug_iso) build/debug/iso
+$(debug_img): $(bloader_img) $(debug_kernel)
+	cp $(bloader_img) $(debug_img)
+
+	# mount img without root permissions
+	tmp_loop=$$(udisksctl loop-setup -f $(debug_img) | awk '{gsub(/.$$/,""); print $$NF}') && \
+	tmp_mnt=$$(udisksctl mount -b $$tmp_loop | awk '{print $$NF}') && \
+	cp $(debug_kernel) $$tmp_mnt/KERNEL && \
+	udisksctl unmount -b $$tmp_loop	&& \
+	udisksctl loop-delete -b $$tmp_loop
 
 $(debug_kernel): $(asm_debug_obj) $(c_debug_obj)
 	ld $(asm_debug_obj) $(c_debug_obj) -o $(debug_kernel) $(LDFLAGS)
@@ -59,10 +70,15 @@ build/debug/obj/c/%.o: src/%.c
 	gcc -c $< -o $@ $(CFLAGS)
 
 # release --------------------------------------------------
-$(release_iso): $(release_kernel)
-	mkdir -p build/release/iso/boot/grub
-	cp $(release_kernel) build/release/iso/boot/$(project_name).bin
-	grub-mkrescue -o $(release_iso) build/release/iso
+$(release_img): $(bloader_img) $(release_kernel)
+	cp $(bloader_img) $(release_img)
+
+	# mount img without root permissions
+	tmp_loop=$$(udisksctl loop-setup -f $(release_img) | awk '{gsub(/.$$/,""); print $$NF}') && \
+	tmp_mnt=$$(udisksctl mount -b $$tmp_loop | awk '{print $$NF}') && \
+	cp $(release_kernel) $$tmp_mnt/KERNEL && \
+	udisksctl unmount -b $$tmp_loop	&& \
+	udisksctl loop-delete -b $$tmp_loop
 
 $(release_kernel): $(asm_release_obj) $(c_release_obj)
 	ld $(asm_release_obj) $(c_release_obj) -o $(release_kernel) $(LDFLAGS)
