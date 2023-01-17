@@ -15,16 +15,16 @@ _start:
 
 set_tss:
     ; Load TSS descriptor into GDT ------------
-    mov rdi, gdt64
-    add rdi, gdt64.tss
+    mov rbx, gdt64
+    add rbx, gdt64.tss
     mov rax, TSS64
-    mov word [rdi+2], ax      ; set base (15 - 0)
+    mov word [rbx+2], ax      ; set base (15 - 0)
     shr rax, 16
-    mov byte [rdi+4], al      ; set base (23 - 16)
+    mov byte [rbx+4], al      ; set base (23 - 16)
     shr rax, 8
-    mov byte [rdi+7], al      ; set base (31 - 24)
+    mov byte [rbx+7], al      ; set base (31 - 24)
     shr rax, 8
-    mov dword [rdi+8], eax    ; set base (63 - 32)
+    mov dword [rbx+8], eax    ; set base (63 - 32)
     ; -----------------------------------------
     ret
 
