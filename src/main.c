@@ -7,19 +7,16 @@
 #include "example_tasks/err_task1.h"
 #include "example_tasks/simple.h"
 
-void kernel_main(uint64_t boot_info_addr) {
-    (void) boot_info_addr;
-
+void kernel_main(bloader_boot_info_t* boot_info) {
     kclear_screen();
     kset_color(BLACK, PINK);
 
     kprintln("%s to %s!", "Welcome", "haiirOS");
 
     // memory --------------------------------------------
-    // TODO: replace multiboot2
-    // hMemoryMap mmap = init_memory_map(boot_info_addr);
+    memory_info_t mmap = init_memory_map(boot_info);
 
-    // print_memory_map(&mmap);
+    print_memory_map(&mmap);
 
     init_paging();
     // --------------------------------------------------
