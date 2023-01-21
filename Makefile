@@ -23,7 +23,7 @@ CFLAGS += -Wall -Wextra -pedantic -nostdlib -Isrc -std=c11
 LDFLAGS := -m elf_x86_64 -nostdlib
 
 
-.PHONY: all clean run release debug build-debug
+.PHONY: all clean run release debug build-debug monitor
 
 all: build-debug
 
@@ -41,6 +41,9 @@ run: release
 
 debug: build-debug
 	qemu-system-x86_64 -s -S -drive format=raw,file=$(debug_img)
+
+monitor: build-debug
+	qemu-system-x86_64 -drive format=raw,file=$(debug_img) -no-reboot -no-shutdown -monitor stdio
 
 
 $(bloader_img):
