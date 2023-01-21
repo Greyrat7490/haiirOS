@@ -63,6 +63,11 @@ typedef struct {
 } __attribute__((packed)) memory_map_t;
 
 
+// only tmp services
+#define BIOS_SERV_PRINTA 0
+#define BIOS_SERV_PRINTB 1
+
+
 typedef struct {
     memory_map_t memory_map;
     uint16_t lower_memory_KiB;
@@ -70,7 +75,8 @@ typedef struct {
     uint64_t PML4_addr;
     uint64_t gdt32_addr;
     uint64_t gdt64_addr;
-    BIOS_IDT_t* biosIDT_addr;
+    void* call_bios_service;
+    BIOS_IDT_t* biosIDT;
     vbe_info_t* vbe;
     vbe_mode_info_t* vbe_mode;
     uint64_t kernel_addr;

@@ -58,9 +58,14 @@ tss_pointer: dq TSS64
 global kernel_stack
 kernel_stack: dq stack_top
 
-; global descriptor table ( 64bit ) -------------------
+; global descriptor table (64bit) -------------------
 align 16
 global gdt64
+global gdt64.code32
+global gdt64.data32
+global gdt64.pointer
+global gdt64.code
+global gdt64.data
 gdt64:
 .null: equ $ - gdt64        ; kernel null descriptor
     dq 0
@@ -103,6 +108,20 @@ gdt64:
     db 0                    ; base  (31 - 24)
     dd 0                    ; base  (63 - 32)
     dd 0                    ; zero
+.code32: equ $ - gdt64      ; ring 0 code descriptor
+    dw 0xffff               ; limit (low)
+    dw 0                    ; base  (low)
+    db 0                    ; base  (middle)
+    db 10011010b            ; present, kernel_mode, code_data_seg, code_seg, executable, read/write
+    db 11001111b            ; protected mode, limit (higher 4bit)
+    db 0                    ; base  (high)
+.data32: equ $ - gdt64      ; ring 0 data descriptor
+    dw 0xffff               ; limit (low)
+    dw 0                    ; base  (low)
+    db 0                    ; base  (middle)
+    db 10010010b            ; present, kernel_mode, code_data_seg, data_seg, executable, read/write
+    db 11001111b            ; protected mode, limit (higher 4bit)
+    db 0                    ; base  (high)
 .pointer:
     dw $ - gdt64 - 1
     dq gdt64

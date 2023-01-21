@@ -3,6 +3,7 @@
 #include "proc/task.h"
 #include "memory/memory.h"
 #include "interrupt/idt.h"
+#include "interrupt/bios/bios.h"
 
 #include "example_tasks/err_task1.h"
 #include "example_tasks/simple.h"
@@ -13,10 +14,11 @@ void kernel_main(bloader_boot_info_t* boot_info) {
 
     kprintln("%s to %s!", "Welcome", "haiirOS");
 
+    init_bios_services(boot_info);
     // memory --------------------------------------------
     memory_info_t mmap = init_memory_map(boot_info);
 
-    print_memory_map(&mmap);
+    // print_memory_map(&mmap);
 
     init_paging();
     // --------------------------------------------------
@@ -25,6 +27,9 @@ void kernel_main(bloader_boot_info_t* boot_info) {
     select_keyboard_layout(QWERTZ_LAYOUT);
 
     init_idt();
+    printA();
+    printB();
+    while(1) __asm__("hlt");
     // --------------------------------------------------
 
     // tests --------------------------------------------
