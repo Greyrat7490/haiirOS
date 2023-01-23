@@ -1,16 +1,17 @@
 #include "bios.h"
+#include "io/io.h"
 
-extern void bios_service_wrapped(uint32_t service_num);
+extern void bios_service_wrapped(uint32_t service_num, uint32_t args);
 void* bios_service;
 
 void init_bios_services(bloader_boot_info_t* boot_info) {
     bios_service = boot_info->call_bios_service;
 }
 
-void printA(void) {
-    bios_service_wrapped(BIOS_SERV_PRINTA);
+void set_vbe_mode(vbe_mode_info_t* vbe_mode) {
+    bios_service_wrapped(BIOS_SERV_SET_VBE, vbe_mode->mode);
 }
 
-void printB(void) {
-    bios_service_wrapped(BIOS_SERV_PRINTB);
+void readCHS(void) {
+    bios_service_wrapped(BIOS_SERV_READ_CHS, 0x0);
 }

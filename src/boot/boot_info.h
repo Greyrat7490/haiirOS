@@ -64,8 +64,8 @@ typedef struct {
 
 
 // only tmp services
-#define BIOS_SERV_PRINTA 0
-#define BIOS_SERV_PRINTB 1
+#define BIOS_SERV_SET_VBE 0
+#define BIOS_SERV_READ_CHS 1
 
 
 typedef struct {
