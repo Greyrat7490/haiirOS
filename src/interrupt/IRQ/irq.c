@@ -50,28 +50,7 @@ static void keyboard_handler(struct interrupt_frame* frame) {
 }
 
 void init_irq(void) {
-    // remap the PIC --------------------------------------------------------
-    // TODO: io_wait()
-    outb(0x20, 0x11); // init master PIC (ICW2 - ICW4)
-    outb(0xa0, 0x11); // init slave PIC
-
-    // ICW2
-    outb(0x21, 0x20); // set master PIC offset to 0x20
-    outb(0xa1, 0x28); // set slave PIC offset to 0x28
-
-    // ICW3
-    outb(0x21, 0x04); // tells this PIC there is a second PIC (at IRQ2)
-    outb(0xa1, 0x02); // tells this PIC its cascade identity
-
-    // ICW4
-    outb(0x21, 0x01); // 8086/88 (MCS-80/85) mode
-    outb(0xa1, 0x01); // 8086/88 (MCS-80/85) mode
-
-    // set masks
-    outb(0x21, 0x00);
-    outb(0xa1, 0x00);
-    // ----------------------------------------------------------------------
-
+    remap_pic();
 
     init_gate(32, (uint64_t )timer_handler, CODE_SEG, GATE_PRESENT | INTERRUPT_GATE, IST_NONE);
     init_gate(33, (uint64_t) keyboard_handler, CODE_SEG, GATE_PRESENT | INTERRUPT_GATE, IST_NONE);

@@ -1,4 +1,3 @@
-#include "memory/Paging/Page/hPage.h"
 #include "types.h"
 #include "io/io.h"
 #include "proc/task.h"
@@ -19,7 +18,7 @@ void kernel_main(bloader_boot_info_t* boot_info) {
     // memory --------------------------------------------
     memory_info_t mmap = init_memory_map(boot_info);
 
-    // print_memory_map(&mmap);
+    print_memory_map(&mmap);
 
     init_paging();
     // --------------------------------------------------
@@ -43,10 +42,26 @@ void kernel_main(bloader_boot_info_t* boot_info) {
     set_vbe_mode(boot_info->vbe_mode);
 
     uint32_t* volatile framebuffer = (uint32_t*)(uint64_t)boot_info->vbe_mode->framebuffer;
-    map_frame(get_hPage((uint64_t)framebuffer), get_hFrame((uint64_t)framebuffer), Present | Writeable);
+    uint32_t pitch = boot_info->vbe_mode->pitch;
+    uint32_t color = 0x41336e;
+    uint32_t color2 = 0x5597ce;
 
-    for (uint32_t i = 0; i < boot_info->vbe_mode->width * boot_info->vbe_mode->height; i++) {
-        *(framebuffer + i) = 0x41336e;
+    while (1) {
+        for (uint32_t y = 0; y < boot_info->vbe_mode->height; y++) {
+            for (uint32_t x = 0; x < boot_info->vbe_mode->width; x++) {
+                framebuffer[x + y*pitch/4] = color;
+            }
+        }
+
+        for(uint32_t i = 0; i < 16; i++) __asm__ volatile ("hlt");
+
+        for (uint32_t y = 0; y < boot_info->vbe_mode->height; y++) {
+            for (uint32_t x = 0; x < boot_info->vbe_mode->width; x++) {
+                framebuffer[x + y*pitch/4] = color2;
+            }
+        }
+
+        for(uint32_t i = 0; i < 16; i++) __asm__ volatile ("hlt");
     }
 
     while(1) __asm__("hlt");
