@@ -34,21 +34,21 @@ void interrupt_handler_err_code(struct interrupt_frame* frame, uint64_t err_code
 
 
 static inline void outb(uint16_t port, uint8_t value) {
-    __asm__ ("outb %0, %1" : : "a"(value), "Nd"(port));
+    __asm__ volatile ("outb %0, %1" : : "a"(value), "Nd"(port));
 }
 
 static inline uint8_t inb(uint16_t port) {
     uint8_t res;
-    __asm__ ("inb %1, %0" : "=a"(res) : "Nd"(port));
+    __asm__ volatile ("inb %1, %0" : "=a"(res) : "Nd"(port));
     return res;
 }
 
 static inline void enable_interrupts(void) {
-    __asm__ ("sti");
+    __asm__ volatile ("sti");
 }
 
 static inline void disable_interrupts(void) {
-    __asm__ ("cli");
+    __asm__ volatile ("cli");
 }
 
 #endif // H_ISR
