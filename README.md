@@ -6,13 +6,9 @@
 
 ## Support for
 
-* x86_64
-* Intel CPU
+* x86_64 little endian
 * Legacy boot (enable CSM if you have UEFI)
----
-* Maybe support for AMD
-* Maybe support for ARM
-* Maybe support for 32bit
+* no RAID support (disable RAID in BIOS to get AHCI controller instead)
 
 ## ToDo-List
 
@@ -20,6 +16,10 @@
   * [ ] VGA text buffer
   * [ ] Paging
   * [ ] mapping
+* [ ] drivers
+  * [ ] AHCI
+  * [ ] XHCI
+  * [ ] NVMe
 * [x] Interrupts
   * [x] Keyboard
   * [x] timer
