@@ -36,10 +36,26 @@ void interrupt_handler_err_code(struct interrupt_frame* frame, uint64_t err_code
 static inline void outb(uint16_t port, uint8_t value) {
     __asm__ volatile ("outb %0, %1" : : "a"(value), "Nd"(port));
 }
+static inline void outw(uint16_t port, uint16_t value) {
+    __asm__ volatile ("outw %0, %1" : : "a"(value), "Nd"(port));
+}
+static inline void outd(uint16_t port, uint32_t value) {
+    __asm__ volatile ("out %0, %1" : : "a"(value), "Nd"(port));
+}
 
 static inline uint8_t inb(uint16_t port) {
     uint8_t res;
     __asm__ volatile ("inb %1, %0" : "=a"(res) : "Nd"(port));
+    return res;
+}
+static inline uint16_t inw(uint16_t port) {
+    uint16_t res;
+    __asm__ volatile ("inw %1, %0" : "=a"(res) : "Nd"(port));
+    return res;
+}
+static inline uint32_t ind(uint16_t port) {
+    uint32_t res;
+    __asm__ volatile ("in %1, %0" : "=a"(res) : "Nd"(port));
     return res;
 }
 
