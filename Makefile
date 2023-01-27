@@ -37,13 +37,13 @@ build-debug: CFLAGS += -ggdb -Og -D DEBUG
 build-debug: $(debug_img)
 
 run: release
-	qemu-system-x86_64 -drive format=raw,file=$(release_img)
+	qemu-system-x86_64 -M q35 -drive format=raw,file=$(release_img)
 
 debug: build-debug
-	qemu-system-x86_64 -s -S -drive format=raw,file=$(debug_img)
+	qemu-system-x86_64 -M q35 -s -S -drive format=raw,file=$(debug_img)
 
 monitor: build-debug
-	qemu-system-x86_64 -drive format=raw,file=$(debug_img) -no-reboot -no-shutdown -monitor stdio
+	qemu-system-x86_64 -M q35 -drive format=raw,file=$(debug_img) -no-reboot -no-shutdown -monitor stdio
 
 
 $(bloader_img):
