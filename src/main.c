@@ -4,6 +4,8 @@
 #include "memory/memory.h"
 #include "interrupt/idt.h"
 #include "interrupt/bios/bios.h"
+#include "pci/pci.h"
+#include "driver/ahci/ahci.h"
 
 #include "example_tasks/err_task1.h"
 #include "example_tasks/simple.h"
@@ -37,6 +39,11 @@ void kernel_main(bloader_boot_info_t* boot_info) {
     kclear_screen();
     // --------------------------------------------------
 
+    // PCI and drivers ----------------------------------
+    init_pci();
+    init_ahci();
+    while(1) __asm__("hlt");
+    // --------------------------------------------------
 
     // test vbe -----------------------------------------
     set_vbe_mode(boot_info->vbe_mode);
@@ -62,9 +69,7 @@ void kernel_main(bloader_boot_info_t* boot_info) {
         }
 
         for(uint32_t i = 0; i < 16; i++) __asm__ volatile ("hlt");
-    }
-
-    while(1) __asm__("hlt");
+    } 
     // --------------------------------------------------
 
 
