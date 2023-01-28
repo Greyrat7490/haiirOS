@@ -4,7 +4,9 @@
 #include "types.h"
 #include "pci/pci.h"
 
-typedef struct {
+#define MAX_AHCI_DEVS 32
+
+typedef volatile struct {
     uint32_t clb;
 	uint32_t clbu;
 	uint32_t fb;
@@ -22,12 +24,11 @@ typedef struct {
 	uint32_t ci;
 	uint32_t sntf;
 	uint32_t fbs;
-	uint32_t devslp;
 	uint32_t reserved1[11];
-	uint32_t vs[10];
-} ahci_port_regs_t;
+	uint32_t vs[4];
+} __attribute__((packed)) ahci_port_regs_t;
 
-typedef struct {
+typedef volatile struct {
 	uint32_t cap;
 	uint32_t ghc;
 	uint32_t ints;
@@ -41,10 +42,10 @@ typedef struct {
 	uint32_t bohc;
 	uint32_t reserved[29];
 	uint32_t vendor[24];
-} ahci_regs_t;
+} __attribute__((packed)) ahci_regs_t;
 
 typedef struct {
-    ahci_port_regs_t regs;
+    ahci_port_regs_t* regs;
     int32_t status;
 } ahci_dev_t;
 
@@ -52,10 +53,10 @@ typedef struct {
     pci_bar_t pci_bar;
     ahci_regs_t* regs;
 
-    ahci_dev_t* devs;
+    ahci_dev_t devs[MAX_AHCI_DEVS];
     uint32_t devs_count;
 
-    uint32_t port_count;
+    uint32_t ports_count;
     uint32_t cmd_slots;
     uint16_t version_maj;
     uint16_t version_min;
