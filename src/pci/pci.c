@@ -114,8 +114,6 @@ static void check_func(uint8_t bus, uint8_t slot, uint8_t func) {
     uint8_t sub_class = class & 0xff;
     uint8_t prog_if = (pci_readw(bus, slot, func, 0x8) >> 8) & 0xff;
 
-    kprintln("pci: [%x:%x:%x]: %x %x", bus, slot, func, base_class, sub_class);
-
     // PCI to PCI bridge
     if (base_class == 0x6 && sub_class == 0x4) {
         uint8_t secondaryBus = (pci_readw(bus, slot, func, 0x18) >> 8) & 0xff;
