@@ -67,4 +67,8 @@ static inline void disable_interrupts(void) {
     __asm__ volatile ("cli");
 }
 
+static inline void io_wait(void) {  // wait ~1-4µs
+    outb(0x80, 0); // port 0x80 is unused
+}
+
 #endif // H_ISR

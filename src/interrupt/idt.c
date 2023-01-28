@@ -40,7 +40,7 @@ void remap_pic(void) {
     disable_interrupts();
 
     // remap the PIC --------------------------------------------------------
-    // TODO: io_wait()
+    io_wait();
     outb(0x20, 0x11); // init master PIC (ICW2 - ICW4)
     outb(0xa0, 0x11); // init slave PIC
 
