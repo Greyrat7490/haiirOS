@@ -13,31 +13,24 @@
 void kernel_main(bloader_boot_info_t* boot_info) {
     kclear_screen();
     kset_color(BLACK, PINK);
-
     kprintln("%s to %s!", "Welcome", "haiirOS");
 
+    // interrupts, exceptions ---------------------------
     init_bios_services(boot_info);
-    // memory --------------------------------------------
-    init_memory(boot_info);
-
-    print_memory_map();
-    print_frame_map();
-    while(1) __asm__("hlt");
-
-    init_paging();
+    select_keyboard_layout(QWERTZ_LAYOUT);
+    init_idt();
     // --------------------------------------------------
 
-    // interrupts, exceptions ---------------------------
-    select_keyboard_layout(QWERTZ_LAYOUT);
-
-    init_idt();
+    // memory --------------------------------------------
+    init_memory(boot_info);
+    // print_memory_map();
+    print_frame_map();
+    while(1) __asm__("hlt");
     // --------------------------------------------------
 
     // tests --------------------------------------------
     __asm__ ("int $0x3"); // breakpoint interrupt
-
     test_mapping();
-
     kclear_screen();
     // --------------------------------------------------
 
