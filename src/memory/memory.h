@@ -3,7 +3,6 @@
 
 #include "types.h"
 #include "boot/boot_info.h"
-#include "Paging/hPaging.h"
 
 typedef struct {
     memory_map_t map;
@@ -15,7 +14,7 @@ typedef struct {
     uint32_t vbe_framebuffer_size;
 } memory_info_t;
 
-memory_info_t init_memory_map(bloader_boot_info_t* boot_info);
-void print_memory_map(memory_info_t* memory_info);
+void init_memory(bloader_boot_info_t* boot_info);
+void print_memory_map(void);
 
 #endif // MEMORY_H_

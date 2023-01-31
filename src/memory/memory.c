@@ -1,11 +1,13 @@
 #include "memory.h"
 #include "io/io.h"
+#include "memory/Paging/Frame/hFrame.h"
 
-memory_info_t init_memory_map(bloader_boot_info_t* boot_info) {
-    // TODO sort and merge memory map if possible
+static memory_info_t memory_info;
+
+static void init_memory_map(bloader_boot_info_t* boot_info) {
     vbe_mode_info_t* mode = boot_info->vbe_mode;
 
-    return (memory_info_t) {
+    memory_info = (memory_info_t) {
         .map = boot_info->memory_map,
         .mem_lower = boot_info->lower_memory_KiB,
         .mem_upper = (uint32_t)boot_info->upper_memory_64KiB * 64,
@@ -16,11 +18,16 @@ memory_info_t init_memory_map(bloader_boot_info_t* boot_info) {
     };
 }
 
-void print_memory_map(memory_info_t* memory_info) {
-    memory_map_t map = memory_info->map;
+void init_memory(bloader_boot_info_t* boot_info) {
+    init_memory_map(boot_info);
+    init_frame_allocator(&memory_info);
+}
+
+void print_memory_map(void) {
+    memory_map_t map = memory_info.map;
 
     kprintln("memory_map addr: %x", map.entries);
-    kprintln("kernel addr: %x", memory_info->kernel_addr);
+    kprintln("kernel addr: %x", memory_info.kernel_addr);
 
     uint64_t size = 0;
     for (uint16_t i = 0; i < map.count; i++) {

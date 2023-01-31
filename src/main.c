@@ -18,9 +18,11 @@ void kernel_main(bloader_boot_info_t* boot_info) {
 
     init_bios_services(boot_info);
     // memory --------------------------------------------
-    memory_info_t mmap = init_memory_map(boot_info);
+    init_memory(boot_info);
 
-    print_memory_map(&mmap);
+    print_memory_map();
+    print_frame_map();
+    while(1) __asm__("hlt");
 
     init_paging();
     // --------------------------------------------------
@@ -69,7 +71,7 @@ void kernel_main(bloader_boot_info_t* boot_info) {
         }
 
         for(uint32_t i = 0; i < 16; i++) __asm__ volatile ("hlt");
-    } 
+    }
     // --------------------------------------------------
 
 
