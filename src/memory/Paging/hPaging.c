@@ -44,6 +44,8 @@ enum PageDirError {
     ANY_ERROR       = (7 << 9 ),   // 111
 };
 
+#define TMP_ADDR 0x200000
+
 // TODO: check if address is derefrenceable
 // without causing page fault (important in get_entry_by_index)
 
@@ -81,7 +83,7 @@ static void flush_TLB(void* m) {
 }
 
 static uint64_t* get_temp_entry(void) {
-    const uint64_t virt_addr = 0x400000;
+    const uint64_t virt_addr = TMP_ADDR;
 
     const uint16_t i1 = get_lv1_index(virt_addr);
     const uint16_t i2 = get_lv2_index(virt_addr);
@@ -106,8 +108,8 @@ static uint64_t* tmp_map(uint64_t phys_addr) {
     hFrame frame = get_hFrame(phys_addr);
     *tmp_entry = frame.start_addr | Present | Writeable;
 
-    flush_TLB((void*) 0x400000);
-    return (uint64_t*) (0x400000 + (phys_addr & 0xfff));
+    flush_TLB((void*) TMP_ADDR);
+    return (uint64_t*) (TMP_ADDR + (phys_addr & 0xfff));
 }
 
 // if pointer is not derefrenceable it will
