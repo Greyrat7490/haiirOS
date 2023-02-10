@@ -14,13 +14,12 @@ typedef struct
 
 void init_frame_allocator(memory_info_t* memory_info);
 
-hFrame get_hFrame(uint64_t containing_addr);
-hFrame alloc_frame(void);
-uint64_t get_next_frame_addr(void);
-// TODO
-void* pmm_alloc(uint64_t size);
-void* pmm_free(uint64_t size);
+void* pmm_alloc(uint64_t count);
+void pmm_free(hFrame first_frame, uint64_t count);
 
 void print_frame_map(void);
+
+hFrame get_hFrame(uint64_t containing_addr);
+uint64_t get_next_frame_addr(void);
 
 #endif // FRAME_H_

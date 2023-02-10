@@ -16,7 +16,7 @@
 static uint8_t* bitmap;
 static uint64_t bitmap_size;
 static uint64_t last_idx;
-static uint64_t last_idx_bit = BITMAP_BLOCK_SIZE;
+static uint64_t last_idx_bit = BITMAP_BLOCK_SIZE-1;
 
 static void reserve_frames(uint64_t start_addr, uint64_t size) {
     if (size == 0) { return; }
@@ -119,8 +119,6 @@ static void map_bitmap(void) {
     uint64_t size = bitmap_size;
 
     create_tmp_bitmap();
-    print_frame_map();
-    while(1){}
 
     for (uint32_t i = 0; i < size/PAGE_SIZE + 1; i++) {
         map_frame(get_hPage((uint64_t)base + i*PAGE_SIZE), get_hFrame((uint64_t)base + i*FRAME_SIZE), Present | Writeable);
@@ -194,26 +192,40 @@ uint64_t get_next_frame_addr(void) {
     return 0;
 }
 
-hFrame alloc_frame(void) {
+// count = 0 -> count = 1
+// return addr to count continues frames and reserves them in bitmap
+void* pmm_alloc(uint64_t count) {
+    uint64_t continues_frames = 0;
+
     for (uint64_t i = last_idx; i < bitmap_size; i++) {
         uint8_t b = bitmap[i];
         if (b != 0xff) {
             for (int8_t j = last_idx_bit; j >= 0; j--) {
                 if ((b >> j) == 0) {
-                    last_idx = i;
-                    last_idx_bit = j;
+                    continues_frames++;
+                    if (continues_frames >= count) {
+                        last_idx = i;
+                        last_idx_bit = j;
 
-                    hFrame frame = { (i*BITMAP_BLOCK_SIZE + j) * FRAME_SIZE };
-                    reserve_frames(frame.start_addr, FRAME_SIZE);
-                    return frame;
+                        void* addr = (void*)((i*BITMAP_BLOCK_SIZE + j - continues_frames) * FRAME_SIZE);
+                        reserve_frames((uint64_t)addr, continues_frames * FRAME_SIZE);
+                        return addr;
+                    }
+                } else {
+                    continues_frames = 0;
                 }
             }
         } else {
-            last_idx_bit = BITMAP_BLOCK_SIZE;
+            continues_frames = 0;
+            last_idx_bit = BITMAP_BLOCK_SIZE-1;
         }
     }
 
-    return (hFrame) {0};
+    return (void*)0x0;
+}
+
+void pmm_free(hFrame first_frame, uint64_t count) {
+    free_frames(first_frame.start_addr, count*FRAME_SIZE);
 }
 
 void print_frame_map(void) {

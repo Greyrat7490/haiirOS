@@ -68,8 +68,10 @@ static void* mmap_syscall(void* addr, uint64_t len, ProtFlags prot, int flags, i
     if ((prot & PROT_EXEC) == 0) { pageFlags |= ExecDisable; }
 
     uint32_t pagesCount = len / PAGE_SIZE + 1;
+
+    void* phys_addr_start = pmm_alloc(pagesCount);
     for (uint32_t i = 0; i < pagesCount; i++) {
-        hFrame frame = alloc_frame();
+        hFrame frame = get_hFrame((uint64_t)phys_addr_start + i*PAGE_SIZE);
         hPage page = get_hPage((uint64_t)addr + i*PAGE_SIZE);
 
         map_user_frame((uint64_t*) pml4_table, page, frame, pageFlags);

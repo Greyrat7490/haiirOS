@@ -44,9 +44,12 @@ void add_task(const char* task_name, uint64_t func_addr) {
     uint64_t* user_pml4 = create_user_pml4();
 
     uint64_t user_stack_top = 0x1000000f000;
-    for (int i = 0; i < 0xf; i++) {
-        hFrame frame = alloc_frame();
-        hPage page = get_hPage(user_stack_top - i * 0x1000);
+    uint32_t pagesCount = 0xf; 
+
+    uint64_t phys_addr_start = (uint64_t)pmm_alloc(pagesCount) + pagesCount*PAGE_SIZE;
+    for (uint32_t i = 0; i < pagesCount ; i++) {
+        hFrame frame = get_hFrame(phys_addr_start - i*PAGE_SIZE);
+        hPage page = get_hPage(user_stack_top - i*PAGE_SIZE);
         map_user_frame(user_pml4, page, frame, Present | Writeable | User);
     }
 

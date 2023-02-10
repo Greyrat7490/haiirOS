@@ -173,10 +173,9 @@ static uint64_t* get_entry(PML4Table* pml4_table, uint64_t virt_addr) {
 
 // return virtual address to the table
 static uint64_t* create_table(uint64_t* entry, PageFlags flags) {
-    hFrame table_frame = alloc_frame();
-    *entry = table_frame.start_addr | flags;
-
-    return tmp_map(table_frame.start_addr);
+    void* table = pmm_alloc(1);
+    *entry = (uint64_t)table | flags;
+    return tmp_map((uint64_t)table);
 }
 
 static void create_missing_tables(uint64_t* entry, hPage page, hFrame frame, PageFlags flags) {
@@ -285,7 +284,7 @@ void map_user_frame(uint64_t* pml4_table, hPage page, hFrame frame, PageFlags fl
 }
 
 uint64_t* create_user_pml4(void) {
-    PML4Table* pml4_addr = (PML4Table*) alloc_frame().start_addr;
+    PML4Table* pml4_addr = (PML4Table*)pmm_alloc(1);
 
     map_frame(get_hPage((uint64_t) pml4_addr), get_hFrame((uint64_t) pml4_addr), Present | Writeable | User);
 
