@@ -29,6 +29,8 @@ void init_paging(void);
 
 void map_frame(page_t page, frame_t frame, PageFlags flags);
 void map_user_frame(uint64_t* pml4_table, page_t page, frame_t frame, PageFlags flags);
+void unmap_page(page_t page);
+void unmap_user_page(uint64_t* pml4_table, page_t page);
 uint64_t* create_user_pml4(void);
 
 uint64_t to_phys(uint64_t virt_addr);

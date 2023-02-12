@@ -190,7 +190,7 @@ uint64_t get_next_frame_addr(void) {
 
 // count = 0 -> count = 1
 // return addr to count continues frames and reserves them in bitmap
-void* pmm_alloc(uint64_t count) {
+void* pmm_alloc_unmapped(uint64_t count) {
     uint64_t continues_frames = 0;
 
     for (uint64_t i = last_idx; i < bitmap_size; i++) {
@@ -220,7 +220,23 @@ void* pmm_alloc(uint64_t count) {
     return (void*)0x0;
 }
 
-void pmm_free(frame_t first_frame, uint64_t count) {
+void* pmm_alloc(uint64_t count) {
+    void* addr = pmm_alloc_unmapped(count);
+    map_frame(to_frame((uint64_t)addr), to_page((uint64_t)addr), Present | Writeable);
+    return addr;
+}
+
+void pmm_free(page_t first_page, uint64_t count) {
+    frame_t first_frame = (frame_t) to_phys(first_page);
+    free_frames(first_frame, count*FRAME_SIZE);
+
+    for (uint64_t i = 0; i < count; i++) {
+        unmap_page(first_page + i*PAGE_SIZE);
+    }
+}
+
+void pmm_free_unmapped(page_t first_page, uint64_t count) {
+    frame_t first_frame = (frame_t) to_phys(first_page);
     free_frames(first_frame, count*FRAME_SIZE);
 }
 

@@ -172,7 +172,7 @@ static uint64_t* get_entry(PML4Table* pml4_table, uint64_t virt_addr) {
 
 // return virtual address to the table
 static uint64_t* create_table(uint64_t* entry, PageFlags flags) {
-    void* table = pmm_alloc(1);
+    void* table = pmm_alloc_unmapped(1);
     *entry = (uint64_t)table | flags;
     return tmp_map((uint64_t)table);
 }
@@ -274,6 +274,16 @@ static void map(uint64_t* pml4_table, page_t page, frame_t frame, PageFlags flag
     }
 }
 
+static void unmap(uint64_t* pml4_table, page_t page) {
+    uint64_t* entry = get_entry((PML4Table*) pml4_table, page);
+
+    if (is_entry_valid(entry)) {
+        *entry = 0x0;
+        flush_TLB((void*) page);
+    }
+}
+
+
 void map_frame(page_t page, frame_t frame, PageFlags flags) {
     map((uint64_t*) s_pml4_table, page, frame, flags);
 }
@@ -282,9 +292,16 @@ void map_user_frame(uint64_t* pml4_table, page_t page, frame_t frame, PageFlags 
     map(pml4_table, page, frame, flags);
 }
 
-uint64_t* create_user_pml4(void) {
-    PML4Table* pml4_addr = (PML4Table*)pmm_alloc(1);
+void unmap_page(page_t page) {
+    unmap((uint64_t*) s_pml4_table, page);
+}
 
+void unmap_user_page(uint64_t* pml4_table, page_t page) {
+    unmap(pml4_table, page);
+}
+
+uint64_t* create_user_pml4(void) {
+    PML4Table* pml4_addr = (PML4Table*)pmm_alloc_unmapped(1);
     map_frame(to_page((uint64_t) pml4_addr), to_frame((uint64_t) pml4_addr), Present | Writeable | User);
 
     for (uint16_t i = 1; i < 512; i++)

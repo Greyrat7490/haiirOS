@@ -11,6 +11,7 @@ typedef uint64_t frame_t;
 
 void init_pmm(memory_info_t* memory_info);
 
+void* pmm_alloc_unmapped(uint64_t count);
 void* pmm_alloc(uint64_t count);
 void pmm_free(frame_t first_frame, uint64_t count);
 

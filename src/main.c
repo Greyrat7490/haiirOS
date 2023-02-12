@@ -23,23 +23,7 @@ void kernel_main(bloader_boot_info_t* boot_info) {
 
     // memory --------------------------------------------
     init_memory(boot_info);
-    // print_memory_map();
-
-    kprintln("");
-
-    print_frame_map();
-    kprintln("");
-
-    void* test = pmm_alloc(3);
-
-    print_frame_map();
-    kprintln("");
-
-    pmm_free(to_frame((uint64_t)test), 3);
-
-    print_frame_map();
-
-    while(1) __asm__("hlt");
+    print_memory_map();
     // --------------------------------------------------
 
     // tests --------------------------------------------

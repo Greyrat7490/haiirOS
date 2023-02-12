@@ -46,7 +46,7 @@ void add_task(const char* task_name, uint64_t func_addr) {
     uint64_t user_stack_top = 0x1000000f000;
     uint32_t pagesCount = 0xf; 
 
-    uint64_t phys_addr_start = (uint64_t)pmm_alloc(pagesCount) + pagesCount*PAGE_SIZE;
+    uint64_t phys_addr_start = (uint64_t)pmm_alloc_unmapped(pagesCount) + pagesCount*PAGE_SIZE;
     for (uint32_t i = 0; i < pagesCount ; i++) {
         frame_t frame = to_frame(phys_addr_start - i*PAGE_SIZE);
         page_t page = to_page(user_stack_top - i*PAGE_SIZE);

@@ -69,7 +69,7 @@ static void* mmap_syscall(void* addr, uint64_t len, ProtFlags prot, int flags, i
 
     uint32_t pagesCount = len / PAGE_SIZE + 1;
 
-    void* phys_addr_start = pmm_alloc(pagesCount);
+    void* phys_addr_start = pmm_alloc_unmapped(pagesCount);
     for (uint32_t i = 0; i < pagesCount; i++) {
         frame_t frame = to_frame((uint64_t)phys_addr_start + i*PAGE_SIZE);
         page_t page = to_page((uint64_t)addr + i*PAGE_SIZE);
