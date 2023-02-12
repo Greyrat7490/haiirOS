@@ -2,7 +2,7 @@
 #include "time.h"
 #include "io/io.h"
 #include "proc/scheduler.h"
-#include "memory/Paging/hPaging.h"
+#include "memory/paging.h"
 
 static uint64_t write_syscall(uint64_t fd, const char* buffer) {
     kset_color(BLACK, WHITE);
@@ -71,8 +71,8 @@ static void* mmap_syscall(void* addr, uint64_t len, ProtFlags prot, int flags, i
 
     void* phys_addr_start = pmm_alloc(pagesCount);
     for (uint32_t i = 0; i < pagesCount; i++) {
-        hFrame frame = get_hFrame((uint64_t)phys_addr_start + i*PAGE_SIZE);
-        hPage page = get_hPage((uint64_t)addr + i*PAGE_SIZE);
+        frame_t frame = to_frame((uint64_t)phys_addr_start + i*PAGE_SIZE);
+        page_t page = to_page((uint64_t)addr + i*PAGE_SIZE);
 
         map_user_frame((uint64_t*) pml4_table, page, frame, pageFlags);
     }

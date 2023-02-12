@@ -1,7 +1,7 @@
 #include "ahci.h"
 #include "io/io.h"
 #include "pci/pci.h"
-#include "memory/Paging/hPaging.h"
+#include "memory/paging.h"
 #include "interrupt/ISR/isr.h"
 
 #define AHCI_PROG_IF 1
@@ -120,7 +120,7 @@ bool init_ahci_controller(pci_dev_t* dev) {
     }
 
     for (uint32_t i = 0; i < (bar.size-1) / PAGE_SIZE + 1; i++) {
-        map_frame(get_hPage(bar.base + i*PAGE_SIZE), get_hFrame(bar.base + i*PAGE_SIZE), Present | Writeable | DisableCache);
+        map_frame(to_page(bar.base + i*PAGE_SIZE), to_frame(bar.base + i*PAGE_SIZE), Present | Writeable | DisableCache);
     }
 
     ahci_regs_t* regs = (ahci_regs_t*)bar.base;

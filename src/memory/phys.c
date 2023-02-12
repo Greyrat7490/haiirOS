@@ -1,8 +1,8 @@
-#include "hFrame.h"
+#include "phys.h"
 #include "io/io.h"
-#include "memory/Paging/Page/hPage.h"
-#include "memory/Paging/hPaging.h"
-#include "memory/memory.h"
+#include "memory/virt.h"
+#include "paging.h"
+#include "memory.h"
 
 #define BOOT_SECTION_SIZE (8*1024*1024)   // reserve first 8MiB for bootloader and tmp frames
 
@@ -121,7 +121,7 @@ static void map_bitmap(void) {
     create_tmp_bitmap();
 
     for (uint32_t i = 0; i < size/PAGE_SIZE + 1; i++) {
-        map_frame(get_hPage((uint64_t)base + i*PAGE_SIZE), get_hFrame((uint64_t)base + i*FRAME_SIZE), Present | Writeable);
+        map_frame(to_page((uint64_t)base + i*PAGE_SIZE), to_frame((uint64_t)base + i*FRAME_SIZE), Present | Writeable);
     }
 
     bitmap = (uint8_t*)base;
@@ -154,7 +154,7 @@ static void init_bitmap(memory_info_t* memory_info) {
     }
 }
 
-void init_frame_allocator(memory_info_t* memory_info) {
+void init_pmm(memory_info_t* memory_info) {
     init_bitmap(memory_info);
 
     for (uint16_t i = 0; i < memory_info->map.count; i++) {
@@ -167,10 +167,6 @@ void init_frame_allocator(memory_info_t* memory_info) {
     reserve_frames(memory_info->kernel_addr, memory_info->kernel_size);
     reserve_frames((uint64_t)bitmap, bitmap_size);
     reserve_frames(memory_info->vbe_framebuffer, memory_info->vbe_framebuffer_size);
-}
-
-hFrame get_hFrame(uint64_t containing_addr) {
-    return (hFrame) { containing_addr - (containing_addr % FRAME_SIZE) };
 }
 
 uint64_t get_next_frame_addr(void) {
@@ -224,8 +220,8 @@ void* pmm_alloc(uint64_t count) {
     return (void*)0x0;
 }
 
-void pmm_free(hFrame first_frame, uint64_t count) {
-    free_frames(first_frame.start_addr, count*FRAME_SIZE);
+void pmm_free(frame_t first_frame, uint64_t count) {
+    free_frames(first_frame, count*FRAME_SIZE);
 }
 
 void print_frame_map(void) {

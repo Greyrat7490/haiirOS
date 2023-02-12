@@ -1,7 +1,7 @@
 #include "memory.h"
 #include "io/io.h"
-#include "memory/Paging/Frame/hFrame.h"
-#include "memory/Paging/hPaging.h"
+#include "phys.h"
+#include "paging.h"
 
 static memory_info_t memory_info;
 
@@ -22,7 +22,7 @@ static void init_memory_map(bloader_boot_info_t* boot_info) {
 void init_memory(bloader_boot_info_t* boot_info) {
     init_memory_map(boot_info);
     init_paging();
-    init_frame_allocator(&memory_info);
+    init_pmm(&memory_info);
 }
 
 void print_memory_map(void) {

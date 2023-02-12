@@ -1,9 +1,9 @@
-#ifndef H_PAGING
-#define H_PAGING
+#ifndef PAGING_H_
+#define PAGING_H_
 
 #include "types.h"
-#include "Page/hPage.h"
-#include "Frame/hFrame.h"
+#include "virt.h"
+#include "phys.h"
 
 typedef uint64_t PageFlags;
 #define Present         1
@@ -27,8 +27,8 @@ typedef enum {
 
 void init_paging(void);
 
-void map_frame(hPage page, hFrame frame, PageFlags flags);
-void map_user_frame(uint64_t* pml4_table, hPage page, hFrame frame, PageFlags flags);
+void map_frame(page_t page, frame_t frame, PageFlags flags);
+void map_user_frame(uint64_t* pml4_table, page_t page, frame_t frame, PageFlags flags);
 uint64_t* create_user_pml4(void);
 
 uint64_t to_phys(uint64_t virt_addr);
@@ -40,4 +40,4 @@ bool is_usr_addr_present(uint64_t* pml4_table, uint64_t virt_addr);
 void test_mapping(void);
 void show_entries(uint16_t ptEntries, uint16_t ptTables);
 
-#endif
+#endif // PAGING_H_

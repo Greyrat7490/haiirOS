@@ -1,10 +1,9 @@
-#include "hPaging.h"
+#include "paging.h"
 
 #include "types.h"
 #include "io/io.h"
-
-#include "memory/Paging/Frame/hFrame.h"
-#include "memory/Paging/Page/hPage.h"
+#include "phys.h"
+#include "virt.h"
 
 
 typedef struct
@@ -105,8 +104,8 @@ static uint64_t* get_temp_entry(void) {
 static uint64_t* tmp_map(uint64_t phys_addr) {
     uint64_t* tmp_entry = get_temp_entry();
 
-    hFrame frame = get_hFrame(phys_addr);
-    *tmp_entry = frame.start_addr | Present | Writeable;
+    frame_t frame = to_frame(phys_addr);
+    *tmp_entry = frame | Present | Writeable;
 
     flush_TLB((void*) TMP_ADDR);
     return (uint64_t*) (TMP_ADDR + (phys_addr & 0xfff));
@@ -178,12 +177,12 @@ static uint64_t* create_table(uint64_t* entry, PageFlags flags) {
     return tmp_map((uint64_t)table);
 }
 
-static void create_missing_tables(uint64_t* entry, hPage page, hFrame frame, PageFlags flags) {
+static void create_missing_tables(uint64_t* entry, page_t page, frame_t frame, PageFlags flags) {
     if ((*entry & PML4) == PML4) {
         PDPTable* pdp_table = (PDPTable*) create_table(entry, flags);
         kprintln("%s", "pdp table created");
 
-        uint64_t i3 = get_lv3_index(page.start_addr);
+        uint64_t i3 = get_lv3_index(page);
         entry = &pdp_table->pd_tables[i3];
         *entry = PDP;
     }
@@ -192,7 +191,7 @@ static void create_missing_tables(uint64_t* entry, hPage page, hFrame frame, Pag
         PDTable* pd_table = (PDTable*) create_table(entry, flags);
         kprintln("%s", "pd table created");
 
-        uint64_t i2 = get_lv2_index(page.start_addr);
+        uint64_t i2 = get_lv2_index(page);
         entry = &pd_table->pt_tables[i2];
         *entry = PD;
     }
@@ -201,8 +200,8 @@ static void create_missing_tables(uint64_t* entry, hPage page, hFrame frame, Pag
         PTTable* pt_table = (PTTable*) create_table(entry, flags);
         kprintln("%s", "pt table created");
 
-        uint64_t i1 = get_lv1_index(page.start_addr);
-        pt_table->entries[i1] = frame.start_addr | flags;
+        uint64_t i1 = get_lv1_index(page);
+        pt_table->entries[i1] = frame | flags;
     }
 }
 
@@ -256,17 +255,17 @@ uint64_t to_usr_phys(uint64_t* pml4_table, uint64_t virt_addr) {
     return (*entry & ~((uint64_t) 0xfff)) + (virt_addr & 0xfff);
 }
 
-static void map(uint64_t* pml4_table, hPage page, hFrame frame, PageFlags flags) {
-    uint64_t* entry = get_entry((PML4Table*) pml4_table, page.start_addr);
+static void map(uint64_t* pml4_table, page_t page, frame_t frame, PageFlags flags) {
+    uint64_t* entry = get_entry((PML4Table*) pml4_table, page);
 
     if (is_entry_valid(entry)) {
-        *entry = frame.start_addr | flags;
+        *entry = frame | flags;
 
-        flush_TLB((void*) page.start_addr);
+        flush_TLB((void*) page);
     } else {
         if (!(*entry & NOT_PRESENT)) { // MISSING_TABLE
             create_missing_tables(entry, page, frame, flags);
-            flush_TLB((void*) page.start_addr);
+            flush_TLB((void*) page);
             return;
         }
 
@@ -275,18 +274,18 @@ static void map(uint64_t* pml4_table, hPage page, hFrame frame, PageFlags flags)
     }
 }
 
-void map_frame(hPage page, hFrame frame, PageFlags flags) {
+void map_frame(page_t page, frame_t frame, PageFlags flags) {
     map((uint64_t*) s_pml4_table, page, frame, flags);
 }
 
-void map_user_frame(uint64_t* pml4_table, hPage page, hFrame frame, PageFlags flags) {
+void map_user_frame(uint64_t* pml4_table, page_t page, frame_t frame, PageFlags flags) {
     map(pml4_table, page, frame, flags);
 }
 
 uint64_t* create_user_pml4(void) {
     PML4Table* pml4_addr = (PML4Table*)pmm_alloc(1);
 
-    map_frame(get_hPage((uint64_t) pml4_addr), get_hFrame((uint64_t) pml4_addr), Present | Writeable | User);
+    map_frame(to_page((uint64_t) pml4_addr), to_frame((uint64_t) pml4_addr), Present | Writeable | User);
 
     for (uint16_t i = 1; i < 512; i++)
         pml4_addr->pdp_tables[i] = 0x0;
@@ -344,13 +343,13 @@ void test_mapping(void) {
     kprintln("%x is present = %b", 0xfffffff000, is_addr_present(0xfffffff000));
 
 
-    hFrame frame1 = get_hFrame(0xb8000);
-    hFrame frame2 = get_hFrame(0x3000);
-    hFrame frame3 = get_hFrame(0xffffff);
+    frame_t frame1 = to_frame(0xb8000);
+    frame_t frame2 = to_frame(0x3000);
+    frame_t frame3 = to_frame(0xffffff);
 
-    hPage page1 = get_hPage(0x2000);
-    hPage page2 = get_hPage(0x800000);
-    hPage page3 = get_hPage(0xfffffff000);
+    page_t page1 = to_page(0x2000);
+    page_t page2 = to_page(0x800000);
+    page_t page3 = to_page(0xfffffff000);
 
     uint16_t* testAddr1 = (uint16_t*) 0x2000;
     uint16_t* testAddr2 = (uint16_t*) 0x800010;

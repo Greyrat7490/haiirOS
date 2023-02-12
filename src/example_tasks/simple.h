@@ -2,7 +2,7 @@
 #define H_TASK_SIMPLE
 
 #include "syscall/syscall.h"
-#include "memory/Paging/hPaging.h"
+#include "memory/paging.h"
 
 void task1(void) {
     write(0, "write syscall (from task1)\n");

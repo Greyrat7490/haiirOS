@@ -35,7 +35,7 @@ void kernel_main(bloader_boot_info_t* boot_info) {
     print_frame_map();
     kprintln("");
 
-    pmm_free(get_hFrame((uint64_t)test), 3);
+    pmm_free(to_frame((uint64_t)test), 3);
 
     print_frame_map();
 
