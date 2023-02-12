@@ -29,6 +29,7 @@ void kernel_main(bloader_boot_info_t* boot_info) {
     // tests --------------------------------------------
     __asm__ ("int $0x3"); // breakpoint interrupt
     test_mapping();
+    while(1) __asm__("hlt");
     kclear_screen();
     // --------------------------------------------------
 

@@ -203,23 +203,10 @@ void init_pmm(memory_info_t* memory_info) {
     reserve_frames(memory_info->vbe_framebuffer, memory_info->vbe_framebuffer_size);
 }
 
-uint64_t get_next_frame_addr(void) {
-    uint8_t last_idx_bit_tmp = last_idx_bit;
-
-    for (uint64_t i = last_idx; i < bitmap_size; i++) {
-        uint8_t b = bitmap[i];
-        if (b != 0xff) {
-            for (int8_t j = last_idx_bit_tmp ; j >= 0; j--) {
-                if ((b >> j) == 0) {
-                    return (i*BITMAP_BLOCK_SIZE + j) * FRAME_SIZE;
-                }
-            }
-        } else {
-            last_idx_bit_tmp = BITMAP_BLOCK_SIZE;
-        }
-    }
-
-    return 0;
+bool pmm_is_free(uint64_t addr) {
+    uint32_t block = addr / FRAME_SIZE / BITMAP_BLOCK_SIZE;
+    uint32_t offset = addr / FRAME_SIZE % BITMAP_BLOCK_SIZE;
+    return (bitmap[block] >> offset) == 0;
 }
 
 // return addr to count continues frames and reserves them in bitmap

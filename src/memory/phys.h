@@ -9,17 +9,17 @@
 
 typedef uint64_t frame_t;
 
+inline frame_t to_frame(uint64_t addr) { 
+    return (frame_t) addr & ~(FRAME_SIZE-1);
+}
+
 void init_pmm(memory_info_t* memory_info);
 
 void* pmm_alloc_unmapped(uint64_t count);
 void* pmm_alloc(uint64_t count);
 void pmm_free(frame_t first_frame, uint64_t count);
+bool pmm_is_free(uint64_t addr);
 
 void print_frame_map(void);
-
-inline frame_t to_frame(uint64_t addr) { 
-    return (frame_t) addr & ~(FRAME_SIZE-1);
-}
-uint64_t get_next_frame_addr(void);
 
 #endif // PHYS_H_
