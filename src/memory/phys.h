@@ -18,7 +18,7 @@ void pmm_free(frame_t first_frame, uint64_t count);
 void print_frame_map(void);
 
 inline frame_t to_frame(uint64_t addr) { 
-    return (frame_t) (addr + (FRAME_SIZE-1)) & ~(FRAME_SIZE-1);
+    return (frame_t) addr & ~(FRAME_SIZE-1);
 }
 uint64_t get_next_frame_addr(void);
 
