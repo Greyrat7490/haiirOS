@@ -154,6 +154,40 @@ static void init_bitmap(memory_info_t* memory_info) {
     }
 }
 
+static void* pmm_alloc_unmapped_(uint64_t count) {
+    if (count == 0) { return 0x0; }
+
+    uint64_t continues_frames = 0;
+
+    for (uint64_t i = last_idx; i < bitmap_size; i++) {
+        uint8_t b = bitmap[i];
+        if (b != 0xff) {
+            for (int8_t j = last_idx_bit; j >= 0; j--) {
+                if ((b >> j) == 0) {
+                    continues_frames++;
+                    if (continues_frames >= count) {
+                        last_idx = i;
+                        last_idx_bit = j;
+
+                        void* addr = (void*)((i*BITMAP_BLOCK_SIZE + j - continues_frames) * FRAME_SIZE);
+                        reserve_frames((uint64_t)addr, continues_frames * FRAME_SIZE);
+                        return addr;
+                    }
+                } else {
+                    continues_frames = 0;
+                }
+            }
+        } else {
+            continues_frames = 0;
+        }
+
+        last_idx_bit = BITMAP_BLOCK_SIZE-1;
+    }
+
+    return (void*)0x0;
+}
+
+
 void init_pmm(memory_info_t* memory_info) {
     init_bitmap(memory_info);
 
@@ -188,36 +222,17 @@ uint64_t get_next_frame_addr(void) {
     return 0;
 }
 
-// count = 0 -> count = 1
 // return addr to count continues frames and reserves them in bitmap
 void* pmm_alloc_unmapped(uint64_t count) {
-    uint64_t continues_frames = 0;
+    void* addr = pmm_alloc_unmapped_(count);
 
-    for (uint64_t i = last_idx; i < bitmap_size; i++) {
-        uint8_t b = bitmap[i];
-        if (b != 0xff) {
-            for (int8_t j = last_idx_bit; j >= 0; j--) {
-                if ((b >> j) == 0) {
-                    continues_frames++;
-                    if (continues_frames >= count) {
-                        last_idx = i;
-                        last_idx_bit = j;
-
-                        void* addr = (void*)((i*BITMAP_BLOCK_SIZE + j - continues_frames) * FRAME_SIZE);
-                        reserve_frames((uint64_t)addr, continues_frames * FRAME_SIZE);
-                        return addr;
-                    }
-                } else {
-                    continues_frames = 0;
-                }
-            }
-        } else {
-            continues_frames = 0;
-            last_idx_bit = BITMAP_BLOCK_SIZE-1;
-        }
+    // retry once
+    if (addr == 0x0) {
+        last_idx = 0;
+        return pmm_alloc_unmapped_(count);
     }
 
-    return (void*)0x0;
+    return addr;
 }
 
 void* pmm_alloc(uint64_t count) {
