@@ -28,8 +28,8 @@
   * [x] get memory map
   * [x] create page tables
   * [x] mapping
-  * [ ] frame allocator (really basic)
-    * [ ] use memory map
+  * [x] frame allocator (really basic)
+    * [x] use memory map
   * [ ] heap allocation
 * [x] Error handling
   * [x] exceptions
