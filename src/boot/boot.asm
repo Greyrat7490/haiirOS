@@ -5,16 +5,19 @@ section .text
 _start:
     cli
 
-    mov rsp, kernel_stack
+    mov rsp, stack_top
+
     call set_tss
     lgdt [gdt64.pointer]
+
+    mov ax, gdt64.tss        ; requested privilege level is 0 (bits 0 and 1 are 0)
+    ltr ax
 
     ; start kernel ----------------------------
     extern kernel_main
     jmp kernel_main
 
 set_tss:
-    ; Load TSS descriptor into GDT ------------
     mov rbx, gdt64
     add rbx, gdt64.tss
     mov rax, TSS64
@@ -25,19 +28,21 @@ set_tss:
     mov byte [rbx+7], al      ; set base (31 - 24)
     shr rax, 8
     mov dword [rbx+8], eax    ; set base (63 - 32)
-    ; -----------------------------------------
     ret
 
 
 section .rodata
 
+; Task State Segment (64bit) ------------------------
 global TSS64
 global IST
 
 align 16
 TSS64:
     dd 0            ; reserved
-    times 3 dq 0    ; RSP 0 - 2
+    dq stack_top    ; RSP 0
+    dq 0            ; RSP 1
+    dq 0            ; RSP 2
     dq 0            ; reserved
 IST:
     dq ist_stack1   ; IST 1, no maskable interrupt
@@ -51,12 +56,6 @@ IST:
     dw 0            ; reserved
     dw 0            ; IO-map addr
 TSS_SIZE: equ $ - TSS64 - 1
-
-global tss_pointer
-tss_pointer: dq TSS64
-
-global kernel_stack
-kernel_stack: dq stack_top
 
 ; global descriptor table (64bit) -------------------
 align 16
@@ -103,11 +102,11 @@ gdt64:
     dw TSS_SIZE & 0xffff    ; limit (15 - 0)
     dw 0                    ; base  (15 - 0)
     db 0                    ; base  (23 - 16)
-    db 10001001b            ; present, kernel_mode, system_seg,
+    db 10001001b            ; present, kernel_mode, system_seg, 64bit TSS (available)
     db 10100000b            ; 4k-paging, lorg_mode, limit(19 - 16)
     db 0                    ; base  (31 - 24)
     dd 0                    ; base  (63 - 32)
-    dd 0                    ; zero
+    dd 0                    ; reserved
 .code32: equ $ - gdt64      ; ring 0 code descriptor
     dw 0xffff               ; limit (low)
     dw 0                    ; base  (low)

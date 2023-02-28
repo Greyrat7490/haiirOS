@@ -23,13 +23,11 @@ void kernel_main(bloader_boot_info_t* boot_info) {
 
     // memory --------------------------------------------
     init_memory(boot_info);
-    print_memory_map();
     // --------------------------------------------------
 
     // tests --------------------------------------------
     __asm__ ("int $0x3"); // breakpoint interrupt
     test_mapping();
-    while(1) __asm__("hlt");
     kclear_screen();
     // --------------------------------------------------
 
@@ -39,36 +37,7 @@ void kernel_main(bloader_boot_info_t* boot_info) {
     while(1) __asm__("hlt");
     // --------------------------------------------------
 
-    // test vbe -----------------------------------------
-    set_vbe_mode(boot_info->vbe_mode);
-
-    uint32_t* volatile framebuffer = (uint32_t*)(uint64_t)boot_info->vbe_mode->framebuffer;
-    uint32_t pitch = boot_info->vbe_mode->pitch;
-    uint32_t color = 0x41336e;
-    uint32_t color2 = 0x5597ce;
-
-    while (1) {
-        for (uint32_t y = 0; y < boot_info->vbe_mode->height; y++) {
-            for (uint32_t x = 0; x < boot_info->vbe_mode->width; x++) {
-                framebuffer[x + y*pitch/4] = color;
-            }
-        }
-
-        for(uint32_t i = 0; i < 16; i++) __asm__ volatile ("hlt");
-
-        for (uint32_t y = 0; y < boot_info->vbe_mode->height; y++) {
-            for (uint32_t x = 0; x < boot_info->vbe_mode->width; x++) {
-                framebuffer[x + y*pitch/4] = color2;
-            }
-        }
-
-        for(uint32_t i = 0; i < 16; i++) __asm__ volatile ("hlt");
-    }
-    // --------------------------------------------------
-
-
     // start scheduler and go usermode ------------------
-    init_tss();
     init_syscalls();
 
     // add_task("task1 causes err", (uint64_t) &err_task);

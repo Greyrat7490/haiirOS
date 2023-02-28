@@ -3,38 +3,8 @@
 #include "memory/paging.h"
 #include "proc/scheduler.h"
 
-struct tss {
-    uint32_t reserved0;
-
-    uint64_t rsp0; // kernel stack pointer (ring 0)
-    uint64_t rsp1; // ring 1 stack pointer
-    uint64_t rsp2; // ring 2 stack pointer
-
-    uint64_t reserved1;
-
-    uint64_t ist1;
-    uint64_t ist2;
-    uint64_t ist3;
-    uint64_t ist4;
-    uint64_t ist5;
-    uint64_t ist6;
-    uint64_t ist7;
-
-    uint64_t reserved2;
-    uint16_t reserved3;
-    uint16_t io_map_base_addr;
-} __attribute__((packed));
-typedef struct tss tss_t;
-
-extern tss_t* tss_pointer;
-extern void flush_tss(void);
 extern uint64_t kernel_stack;
 extern void enable_syscalls(void);
-
-void init_tss(void) {
-    tss_pointer->rsp0 = kernel_stack;
-    flush_tss();
-}
 
 void init_syscalls(void) {
     enable_syscalls();
@@ -44,7 +14,7 @@ void add_task(const char* task_name, uint64_t func_addr) {
     uint64_t* user_pml4 = create_user_pml4();
 
     uint64_t user_stack_top = 0x1000000f000;
-    uint32_t pagesCount = 0xf; 
+    uint32_t pagesCount = 0xf;
 
     uint64_t phys_addr_start = (uint64_t)pmm_alloc_unmapped(pagesCount) + pagesCount*PAGE_SIZE;
     for (uint32_t i = 0; i < pagesCount ; i++) {
