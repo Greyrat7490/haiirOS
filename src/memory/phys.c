@@ -169,7 +169,7 @@ static void* pmm_alloc_unmapped_(uint64_t count) {
                         last_idx = i;
                         last_idx_bit = j;
 
-                        void* addr = (void*)((i*BITMAP_BLOCK_SIZE + j - continues_frames) * FRAME_SIZE);
+                        void* addr = (void*)((i*BITMAP_BLOCK_SIZE + j - continues_frames + 1) * FRAME_SIZE);
                         reserve_frames((uint64_t)addr, continues_frames * FRAME_SIZE);
                         return addr;
                     }
