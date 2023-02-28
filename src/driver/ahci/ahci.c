@@ -1,6 +1,7 @@
 #include "ahci.h"
 #include "io/io.h"
 #include "pci/pci.h"
+#include "memory/phys.h"
 #include "memory/paging.h"
 #include "interrupt/ISR/isr.h"
 
@@ -27,7 +28,7 @@
 static ahci_controller_t controllers[MAX_AHCI_CONTROLLERS];
 static uint32_t controllers_count = 0;
 
-uint8_t get_ahci_dev_type(ahci_port_regs_t* port) {
+static uint8_t get_ahci_dev_type(ahci_port_regs_t* port) {
     uint32_t ssts = port->ssts;
     uint8_t det = ssts & 0xf;
     uint8_t ipm = (ssts >> 8) & 0xf;
@@ -50,7 +51,74 @@ uint8_t get_ahci_dev_type(ahci_port_regs_t* port) {
     }
 }
 
-bool bios_handoff(volatile ahci_regs_t* regs) {
+static volatile ahci_cmd_table* set_prdt(volatile ahci_cmd_header* cmd_header, uint64_t buffer_addr, bool interrupt, uint32_t byte_count) {
+    volatile ahci_cmd_table* table = (ahci_cmd_table*) ((uint64_t) cmd_header->ctba | ((uint64_t) cmd_header->ctbau << 32));
+
+    table->entries[0].i = interrupt & 1;
+    table->entries[0].dbc = byte_count;
+    table->entries[0].dba = (uint32_t) buffer_addr;
+    table->entries[0].dbau = (uint32_t) (buffer_addr >> 32);
+
+    return table;
+}
+
+
+static void start_cmd(ahci_port_regs_t* port) {
+    while ((port->cmd & HBA_CMD_CR) != 0) {} 
+
+    port->cmd |= HBA_CMD_FRE;
+    port->cmd |= HBA_CMD_ST;
+}
+
+static void stop_cmd(ahci_port_regs_t* port) {
+    port->cmd &= ~HBA_CMD_ST;
+    port->cmd &= ~HBA_CMD_FRE;
+
+    while ((port->cmd & HBA_CMD_CR) != 0 || (port->cmd & HBA_CMD_FR) != 0) {} 
+}
+
+static void rebase_port(ahci_port_regs_t* port) {
+    stop_cmd(port);
+
+    uint64_t cmd_list_addr = (uint64_t) pmm_alloc(1);
+    for (uint64_t i = 0; i < FRAME_SIZE; i++) { ((uint8_t*)cmd_list_addr)[i] = 0; }
+
+    port->clb = (uint32_t) cmd_list_addr;
+    port->clbu = (uint32_t) (cmd_list_addr >> 32);
+
+    for (uint32_t i = 0; i < 32; i++) {
+        volatile ahci_cmd_header* cmd_header = (ahci_cmd_header*) (((uint64_t) port->clb | ((uint64_t) port->clbu << 32))
+                + i * sizeof(ahci_cmd_header));
+
+        uint64_t desc_base = (uint64_t) pmm_alloc(1);
+        for (uint64_t i = 0; i < FRAME_SIZE; i++) { ((uint8_t*)desc_base)[i] = 0; }
+
+        cmd_header->ctba = (uint32_t) desc_base;
+        cmd_header->ctbau = (uint32_t) (desc_base >> 32);
+        cmd_header->prdtl = 1;
+    }
+
+    uint64_t fib_addr = (uint64_t) pmm_alloc(1);
+    for (uint64_t i = 0; i < FRAME_SIZE; i++) { ((uint8_t*)fib_addr)[i] = 0; }
+
+    port->fb = (uint32_t) fib_addr;
+    port->fbu = (uint32_t) (fib_addr >> 32);
+
+    start_cmd(port);
+}
+
+static void send_cmd(ahci_port_regs_t* port, uint32_t slot) {
+    // wait until port is not busy anymore
+    while ((port->tfd & 0x88) != 0) { __asm__ volatile ("pause"); }
+
+    // issue command
+    port->ci = 1 << slot;
+
+    // wait for completion
+    while ((port->ci & (1 << slot)) != 0) { __asm__ volatile ("pause"); } 
+}
+
+static bool bios_handoff(ahci_regs_t* regs) {
     if ((regs->cap2 & 1) == 0) {
         kprintln("WARNING: AHCI controller does not support bios handoff");     // not needed on all hardware?
         return false;
@@ -58,9 +126,7 @@ bool bios_handoff(volatile ahci_regs_t* regs) {
 
     regs->bohc |= 1 << 1;
 
-    while ((regs->bohc & 1) == 0) {
-        __asm__ volatile ("pause");
-    }
+    while ((regs->bohc & 1) == 0) { __asm__ volatile ("pause"); }
 
     for (uint32_t i = 0; i < 25 * 1000; i++) { io_wait(); } // wait ~25ms
 
@@ -77,7 +143,7 @@ bool bios_handoff(volatile ahci_regs_t* regs) {
     return true;
 }
 
-uint32_t find_cmd_slot(uint32_t cmd_slots, ahci_port_regs_t* port) {
+static uint32_t find_cmd_slot(uint32_t cmd_slots, ahci_port_regs_t* port) {
     for (uint32_t i = 0; i < cmd_slots; i++) {
         if (((port->ci | port->sact) & (1 << i)) == 0) {
             return i;
@@ -87,19 +153,86 @@ uint32_t find_cmd_slot(uint32_t cmd_slots, ahci_port_regs_t* port) {
     return (uint32_t)-1;
 }
 
-ahci_dev_t init_ahci_dev(uint32_t cmd_slots, ahci_port_regs_t* port) {
+static bool send_identify_cmd(uint16_t* ident, uint32_t cmd_slots, ahci_port_regs_t* port) {
     uint32_t cmd_slot = find_cmd_slot(cmd_slots, port);
     if (cmd_slot == (uint32_t)-1) {
         kprintln("ERROR: no free command slot (retry later)");
+        return false;
+    }
+
+    volatile ahci_cmd_header* cmd_header = (ahci_cmd_header*) (((uint64_t) port->clb | ((uint64_t) port->clbu << 32))
+            + cmd_slot * sizeof(ahci_cmd_header));
+
+    cmd_header->cfl = sizeof(ahci_fis_h2d) / 4;
+    cmd_header->w = 0;
+    cmd_header->prdtl = 1;
+
+    volatile ahci_cmd_table* cmd_table = set_prdt(cmd_header, (uint64_t)ident, true, 511);
+
+    volatile ahci_fis_h2d* cmd_ptr = (ahci_fis_h2d*) &cmd_table->cfis;
+    for (uint64_t i = 0; i < sizeof(ahci_fis_h2d); i++) { ((uint8_t*)cmd_ptr)[i] = 0; } // TODO: memset
+
+    cmd_ptr->cmd = 0xec; // identify command
+    cmd_ptr->c = 1;      // command
+    cmd_ptr->type = FIS_TYPE_REG_H2D;
+    cmd_ptr->device = 0;
+
+    send_cmd(port, cmd_slot);
+    return true;
+}
+
+static ahci_dev_t init_ahci_dev(uint32_t cmd_slots, ahci_port_regs_t* port) {
+    rebase_port(port);
+
+    uint16_t* ident = (uint16_t*) pmm_alloc(1);
+    if (!send_identify_cmd(ident, cmd_slots, port)) {
+        kprintln("ERROR: could not send identify command");
         return (ahci_dev_t){0};
     }
 
+    uint64_t sector_count = *((uint64_t*)(&ident[100]));
+    kprintln("ahci dev sector count: %d", sector_count);
+
+    char* info = pmm_alloc(1);
+    char* serial_num = info;
+    char* firmware = info + 21;
+    char* model_num = info + 30;
+
+    // serial_num
+    for (uint64_t i = 0; i < 10; i++) {
+        // swap bytes
+        serial_num[i*2+1] = (uint8_t) (ident[10+i] & 0xff);
+        serial_num[i*2] = (uint8_t) (ident[10+i] >> 8) & 0xff;
+    }
+
+    // firmware
+    for (uint64_t i = 0; i < 4; i++) {
+        // swap bytes
+        firmware[i*2+1] = (uint8_t) (ident[23+i] & 0xff);
+        firmware[i*2] = (uint8_t) (ident[23+i] >> 8) & 0xff;
+    }
+
+    // model_num
+    for (uint64_t i = 0; i < 20; i++) {
+        // swap bytes
+        model_num[i*2+1] = (uint8_t) (ident[27+i] & 0xff);
+        model_num[i*2] = (uint8_t) (ident[27+i] >> 8) & 0xff;
+    }
+
+    kprintln("ahci dev serial number: %s", serial_num);
+    kprintln("ahci dev firmware: %s", firmware);
+    kprintln("ahci dev model number: %s", model_num);
+
     return (ahci_dev_t) {
-        .regs=port
+        .regs=port,
+        .sector_count=sector_count,
+        .serial_num=serial_num,
+        .firmware=firmware,
+        .model_num=model_num,
     };
 }
 
-bool init_ahci_controller(pci_dev_t* dev) {
+static bool init_ahci_controller(pci_dev_t* dev) {
     uint32_t cmd = pci_readd(dev->bus, dev->slot, dev->func, 0x4);
     if ((cmd & (1 << 2)) == 0) {
         cmd = pci_readd(dev->bus, dev->slot, dev->func, 0x4);
