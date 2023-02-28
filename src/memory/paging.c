@@ -127,11 +127,11 @@ static uint64_t* get_entry_by_index(PML4Table* pml4_table, PageFlags new_table_f
 
     uint64_t* pdp_entry = &pdp_table->pd_tables[i3];
     PDTable* pd_table = (PDTable*) get_table_from_entry(pdp_entry, new_table_flags);
-    if (pdp_table == 0x0) { return 0x0; }
+    if (pd_table == 0x0) { return 0x0; }
 
     uint64_t* pd_entry = &pd_table->pt_tables[i2];
     PTTable* pt_table = (PTTable*) get_table_from_entry(pd_entry, new_table_flags);
-    if (pdp_table == 0x0) { return 0x0; }
+    if (pt_table == 0x0) { return 0x0; }
 
     return &pt_table->entries[i1];
 }
