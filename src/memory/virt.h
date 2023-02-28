@@ -7,7 +7,7 @@
 
 typedef uint64_t page_t;
 
-inline page_t to_page(uint64_t addr) { 
+inline page_t to_page(uint64_t addr) {
     return (page_t) addr & ~(PAGE_SIZE-1);
 }
 

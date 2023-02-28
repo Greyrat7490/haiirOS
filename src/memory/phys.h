@@ -9,7 +9,7 @@
 
 typedef uint64_t frame_t;
 
-inline frame_t to_frame(uint64_t addr) { 
+inline frame_t to_frame(uint64_t addr) {
     return (frame_t) addr & ~(FRAME_SIZE-1);
 }
 

@@ -27,7 +27,7 @@ static PML4Table* s_pml4_table;
 
 #define TMP_ADDR 0x200000
 
-static bool is_entry_valid(uint64_t* entry) { 
+static bool is_entry_valid(uint64_t* entry) {
     return entry != 0x0;
 }
 
@@ -293,9 +293,6 @@ void show_entries(uint16_t ptEntries, uint16_t ptTables) {
 // 0xfffffff000 -> 0xfff000
 void test_mapping(void) {
     kclear_screen();
-    // fixed
-    // println("**<- flush_TLB clears the first two fields (first 32bit) of the console");
-
     // test how much is mapped (should be 8MiB)
     kprintln("%x is present = %b", 0x7fffff, is_addr_present(0x7fffff));
     kprintln("%x is present = %b", 0x800000, is_addr_present(0x800000));
