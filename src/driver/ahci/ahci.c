@@ -109,7 +109,7 @@ static void rebase_port(ahci_port_regs_t* port) {
 
 static void send_cmd(ahci_port_regs_t* port, uint32_t slot) {
     // wait until port is not busy anymore
-    while ((port->tfd & 0x88) != 0) { __asm__ volatile ("pause"); }
+    while ((port->tfd & (ATA_DEV_BUSY | ATA_DEV_DRQ)) != 0) { __asm__ volatile ("pause"); }
 
     // issue command
     port->ci = 1 << slot;
@@ -181,6 +181,48 @@ static bool send_identify_cmd(uint16_t* ident, uint32_t cmd_slots, ahci_port_reg
     return true;
 }
 
+static bool send_rw_cmd(uint64_t lba, uint16_t sector_count, void* buffer, bool write, ahci_dev_t* dev) {
+    uint32_t cmd_slot = find_cmd_slot(dev->cmd_slots, dev->port);
+    if (cmd_slot == (uint32_t)-1) {
+        kprintln("ERROR: no free command slot (retry later)");
+        return false;
+    }
+
+    volatile ahci_cmd_header* cmd_header = (ahci_cmd_header*) (((uint64_t) dev->port->clb | ((uint64_t) dev->port->clbu << 32))
+            + cmd_slot * sizeof(ahci_cmd_header));
+
+    cmd_header->cfl = sizeof(ahci_fis_h2d) / 4;
+    cmd_header->w = write & 1;
+    cmd_header->prdtl = 1;          // TODO: use multiple entries
+
+    volatile ahci_cmd_table* cmd_table = set_prdt(cmd_header, (uint64_t)buffer, true, 511);
+
+    volatile ahci_fis_h2d* cmd_ptr = (ahci_fis_h2d*) &cmd_table->cfis;
+    for (uint64_t i = 0; i < sizeof(ahci_fis_h2d); i++) { ((uint8_t*)cmd_ptr)[i] = 0; }
+
+    if (write) {
+        cmd_ptr->cmd = 0x35;    // write command
+    } else {
+        cmd_ptr->cmd = 0x25;    // read command
+    }
+    cmd_ptr->c = 1;             // command
+    cmd_ptr->type = FIS_TYPE_REG_H2D;
+    cmd_ptr->device = 1<<6;     // lba mode
+
+    cmd_ptr->lba0 = lba & 0xff;
+    cmd_ptr->lba1 = (lba >> 8) & 0xff;
+    cmd_ptr->lba2 = (lba >> 16) & 0xff;
+    cmd_ptr->lba3 = (lba >> 24) & 0xff;
+    cmd_ptr->lba4 = (lba >> 32) & 0xff;
+    cmd_ptr->lba5 = (lba >> 40) & 0xff;
+
+    cmd_ptr->countl = sector_count & 0xff;
+    cmd_ptr->counth = (sector_count >> 8) & 0xff;
+
+    send_cmd(dev->port, cmd_slot);
+    return true;
+}
+
 static ahci_dev_t init_ahci_dev(uint32_t cmd_slots, ahci_port_regs_t* port) {
     rebase_port(port);
 
@@ -223,8 +265,11 @@ static ahci_dev_t init_ahci_dev(uint32_t cmd_slots, ahci_port_regs_t* port) {
     kprintln("ahci dev firmware: %s", firmware);
     kprintln("ahci dev model number: %s", model_num);
 
+    // TODO: check device kind (should be AHCI_DEV_SATA)
+
     return (ahci_dev_t) {
-        .regs=port,
+        .port=port,
+        .cmd_slots=cmd_slots,
         .sector_count=sector_count,
         .serial_num=serial_num,
         .firmware=firmware,
@@ -322,6 +367,16 @@ static bool init_ahci_controller(pci_dev_t* dev) {
     return true;
 }
 
+ahci_dev_t* get_ahci_dev(uint32_t controller, uint32_t device) {
+    if (controller < controllers_count) {
+        if (device < controllers[controller].devs_count) {
+            return &controllers[controller].devs[device];
+        }
+    }
+
+    return 0x0;
+}
+
 void init_ahci(void) {
     pci_dev_t* pci_devs = get_pci_devs();
     uint32_t pci_devs_len = get_pci_devs_len();
@@ -347,4 +402,51 @@ void init_ahci(void) {
             kprintln("disable RAID in BIOS to get an AHCI controller instead of a RAID controller");
         }
     }
+}
+
+uint64_t ahci_read(uint64_t location, uint64_t count, void *buffer, ahci_dev_t* dev) {
+    // TODO: handle not AHCI_SECTOR_SIZE aligned location and sector_count
+    uint64_t lba = location / AHCI_SECTOR_SIZE;
+    uint64_t sector_count = count / AHCI_SECTOR_SIZE;
+
+    uint64_t buf_size = (count + FRAME_SIZE-1) & ~(FRAME_SIZE-1);
+    void* buf = pmm_alloc(buf_size);
+
+    if (!send_rw_cmd(lba, sector_count, buf, false, dev)) {
+        pmm_free(to_frame((uint64_t)buf), buf_size);
+        kprintln("ERROR: could not read from AHCI device");
+        return 0;
+    }
+
+    // TODO: memcpy
+    for (uint64_t i = 0; i < count; i++) {
+        ((uint8_t*)buffer)[i] = ((uint8_t*)buf)[i];
+    }
+
+    pmm_free(to_frame((uint64_t)buf), buf_size);
+
+    return count;
+}
+
+uint64_t ahci_write(uint64_t location, uint64_t count, void *buffer, ahci_dev_t* dev) {
+    uint64_t lba = location / AHCI_SECTOR_SIZE;
+    uint64_t sector_count = count / AHCI_SECTOR_SIZE;
+
+    uint64_t buf_size = (count + FRAME_SIZE-1) & ~(FRAME_SIZE-1);
+    void* buf = pmm_alloc(buf_size);
+
+    // TODO: memcpy
+    for (uint64_t i = 0; i < count; i++) {
+        ((uint8_t*)buf)[i] = ((uint8_t*)buffer)[i];
+    }
+
+    if (!send_rw_cmd(lba, sector_count, buf, true, dev)) {
+        pmm_free(to_frame((uint64_t)buf), buf_size);
+        kprintln("ERROR: could not write to AHCI device");
+        return 0;
+    }
+
+    pmm_free(to_frame((uint64_t)buf), buf_size);
+
+    return count;
 }

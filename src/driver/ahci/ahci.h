@@ -18,6 +18,11 @@
 #define HBA_CMD_FR    0x4000
 #define HBA_CMD_CR    0x8000                                   
 
+#define ATA_DEV_BUSY 0x80
+#define ATA_DEV_DRQ 0x08
+
+#define AHCI_SECTOR_SIZE 0x200
+
 typedef volatile struct {
     uint32_t clb;
     uint32_t clbu;
@@ -57,7 +62,8 @@ typedef volatile struct {
 } __attribute__((packed)) ahci_regs_t;
 
 typedef struct {
-    ahci_port_regs_t* regs;
+    ahci_port_regs_t* port;
+    uint32_t cmd_slots;
     int32_t status;
     uint64_t sector_count;
     char* serial_num;
@@ -172,5 +178,9 @@ typedef struct {
 } __attribute__((packed)) ahci_fis_d2h;
 
 void init_ahci(void);
+ahci_dev_t* get_ahci_dev(uint32_t controller, uint32_t device);
+
+uint64_t ahci_read(uint64_t location, uint64_t count, void* buffer, ahci_dev_t* dev);
+uint64_t ahci_write(uint64_t location, uint64_t count, void* buffer, ahci_dev_t* dev);
 
 #endif // AHCI_H_
