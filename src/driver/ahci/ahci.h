@@ -180,7 +180,7 @@ typedef struct {
 void init_ahci(void);
 ahci_dev_t* get_ahci_dev(uint32_t controller, uint32_t device);
 
-uint64_t ahci_read(uint64_t location, uint64_t count, void* buffer, ahci_dev_t* dev);
-uint64_t ahci_write(uint64_t location, uint64_t count, void* buffer, ahci_dev_t* dev);
+uint64_t ahci_read(uint64_t start, uint64_t size, void* buffer, ahci_dev_t* dev);
+uint64_t ahci_write(uint64_t start, uint64_t size, void* buffer, ahci_dev_t* dev);
 
 #endif // AHCI_H_

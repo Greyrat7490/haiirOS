@@ -23,6 +23,12 @@
 #define HBA_PORT_IPM_ACTIVE 1
 #define HBA_PORT_DET_PRESENT 3
 
+#define AHCI_READ_CMD 0x25
+#define AHCI_WRITE_CMD 0x35
+
+#define BYTES_PER_PRDT 0x200000 // 2MiB (4MiB-1 max)
+#define MAX_PRDTS 1024
+#define AHCI_CMD_HEADERS 32
 
 #define MAX_AHCI_CONTROLLERS 32
 static ahci_controller_t controllers[MAX_AHCI_CONTROLLERS];
@@ -51,20 +57,30 @@ static uint8_t get_ahci_dev_type(ahci_port_regs_t* port) {
     }
 }
 
-static volatile ahci_cmd_table* set_prdt(volatile ahci_cmd_header* cmd_header, uint64_t buffer_addr, bool interrupt, uint32_t byte_count) {
+static volatile ahci_cmd_table* set_prdts(volatile ahci_cmd_header* cmd_header, uint64_t buffer, uint32_t size, bool interrupt) {
     volatile ahci_cmd_table* table = (ahci_cmd_table*) ((uint64_t) cmd_header->ctba | ((uint64_t) cmd_header->ctbau << 32));
 
-    table->entries[0].i = interrupt & 1;
-    table->entries[0].dbc = byte_count;
-    table->entries[0].dba = (uint32_t) buffer_addr;
-    table->entries[0].dbau = (uint32_t) (buffer_addr >> 32);
+    for (uint16_t i = 0; i < cmd_header->prdtl-1; i++) {
+        table->entries[i].i = interrupt & 1;
+        table->entries[i].dbc = BYTES_PER_PRDT - 1; // always 1 less than actual value
+        table->entries[i].dba = (uint32_t) buffer;
+        table->entries[i].dbau = (uint32_t) (buffer >> 32);
+
+        buffer += BYTES_PER_PRDT;
+        size -= BYTES_PER_PRDT;
+    }
+
+    table->entries[cmd_header->prdtl-1].i = interrupt & 1;
+    table->entries[cmd_header->prdtl-1].dbc = size - 1;
+    table->entries[cmd_header->prdtl-1].dba = (uint32_t) buffer;
+    table->entries[cmd_header->prdtl-1].dbau = (uint32_t) (buffer >> 32);
 
     return table;
 }
 
 
 static void start_cmd(ahci_port_regs_t* port) {
-    while ((port->cmd & HBA_CMD_CR) != 0) {} 
+    while ((port->cmd & HBA_CMD_CR) != 0) {}
 
     port->cmd |= HBA_CMD_FRE;
     port->cmd |= HBA_CMD_ST;
@@ -74,7 +90,7 @@ static void stop_cmd(ahci_port_regs_t* port) {
     port->cmd &= ~HBA_CMD_ST;
     port->cmd &= ~HBA_CMD_FRE;
 
-    while ((port->cmd & HBA_CMD_CR) != 0 || (port->cmd & HBA_CMD_FR) != 0) {} 
+    while ((port->cmd & HBA_CMD_CR) != 0 || (port->cmd & HBA_CMD_FR) != 0) {}
 }
 
 static void rebase_port(ahci_port_regs_t* port) {
@@ -86,16 +102,16 @@ static void rebase_port(ahci_port_regs_t* port) {
     port->clb = (uint32_t) cmd_list_addr;
     port->clbu = (uint32_t) (cmd_list_addr >> 32);
 
-    for (uint32_t i = 0; i < 32; i++) {
+    for (uint32_t i = 0; i < AHCI_CMD_HEADERS; i++) {
         volatile ahci_cmd_header* cmd_header = (ahci_cmd_header*) (((uint64_t) port->clb | ((uint64_t) port->clbu << 32))
                 + i * sizeof(ahci_cmd_header));
 
-        uint64_t desc_base = (uint64_t) pmm_alloc(1);
-        for (uint64_t i = 0; i < FRAME_SIZE; i++) { ((uint8_t*)desc_base)[i] = 0; }
+        uint64_t desc_size = sizeof(ahci_cmd_table) + sizeof(ahci_prdt_entry) * (MAX_PRDTS-1);
+        uint64_t desc_base = (uint64_t) pmm_alloc((desc_size-1) / FRAME_SIZE + 1);
+        for (uint64_t i = 0; i < desc_size; i++) { ((uint8_t*)desc_base)[i] = 0; }
 
         cmd_header->ctba = (uint32_t) desc_base;
         cmd_header->ctbau = (uint32_t) (desc_base >> 32);
-        cmd_header->prdtl = 1;
     }
 
     uint64_t fib_addr = (uint64_t) pmm_alloc(1);
@@ -115,7 +131,7 @@ static void send_cmd(ahci_port_regs_t* port, uint32_t slot) {
     port->ci = 1 << slot;
 
     // wait for completion
-    while ((port->ci & (1 << slot)) != 0) { __asm__ volatile ("pause"); } 
+    while ((port->ci & (1 << slot)) != 0) { __asm__ volatile ("pause"); }
 }
 
 static bool bios_handoff(ahci_regs_t* regs) {
@@ -167,7 +183,7 @@ static bool send_identify_cmd(uint16_t* ident, uint32_t cmd_slots, ahci_port_reg
     cmd_header->w = 0;
     cmd_header->prdtl = 1;
 
-    volatile ahci_cmd_table* cmd_table = set_prdt(cmd_header, (uint64_t)ident, true, 511);
+    volatile ahci_cmd_table* cmd_table = set_prdts(cmd_header, (uint64_t)ident, AHCI_SECTOR_SIZE, true);
 
     volatile ahci_fis_h2d* cmd_ptr = (ahci_fis_h2d*) &cmd_table->cfis;
     for (uint64_t i = 0; i < sizeof(ahci_fis_h2d); i++) { ((uint8_t*)cmd_ptr)[i] = 0; } // TODO: memset
@@ -181,11 +197,11 @@ static bool send_identify_cmd(uint16_t* ident, uint32_t cmd_slots, ahci_port_reg
     return true;
 }
 
-static bool send_rw_cmd(uint64_t lba, uint16_t sector_count, void* buffer, bool write, ahci_dev_t* dev) {
+static uint64_t send_rw_cmd(uint64_t lba, uint64_t sector_count, uint64_t buffer, bool write, ahci_dev_t* dev) {
     uint32_t cmd_slot = find_cmd_slot(dev->cmd_slots, dev->port);
     if (cmd_slot == (uint32_t)-1) {
         kprintln("ERROR: no free command slot (retry later)");
-        return false;
+        return sector_count;
     }
 
     volatile ahci_cmd_header* cmd_header = (ahci_cmd_header*) (((uint64_t) dev->port->clb | ((uint64_t) dev->port->clbu << 32))
@@ -193,17 +209,24 @@ static bool send_rw_cmd(uint64_t lba, uint16_t sector_count, void* buffer, bool 
 
     cmd_header->cfl = sizeof(ahci_fis_h2d) / 4;
     cmd_header->w = write & 1;
-    cmd_header->prdtl = 1;          // TODO: use multiple entries
+    cmd_header->prdtl = (sector_count-1) * AHCI_SECTOR_SIZE / BYTES_PER_PRDT + 1;
 
-    volatile ahci_cmd_table* cmd_table = set_prdt(cmd_header, (uint64_t)buffer, true, 511);
+    uint32_t rest_sectors = 0;
+    if (sector_count > (uint64_t)MAX_PRDTS * BYTES_PER_PRDT / AHCI_SECTOR_SIZE) {
+        rest_sectors = sector_count - (uint64_t)MAX_PRDTS * BYTES_PER_PRDT / AHCI_SECTOR_SIZE;
+        sector_count = (uint64_t)MAX_PRDTS * BYTES_PER_PRDT / AHCI_SECTOR_SIZE;
+        cmd_header->prdtl = MAX_PRDTS;
+    }
+
+    volatile ahci_cmd_table* cmd_table = set_prdts(cmd_header, (uint64_t)buffer, sector_count * AHCI_SECTOR_SIZE, true);
 
     volatile ahci_fis_h2d* cmd_ptr = (ahci_fis_h2d*) &cmd_table->cfis;
     for (uint64_t i = 0; i < sizeof(ahci_fis_h2d); i++) { ((uint8_t*)cmd_ptr)[i] = 0; }
 
     if (write) {
-        cmd_ptr->cmd = 0x35;    // write command
+        cmd_ptr->cmd = AHCI_WRITE_CMD;
     } else {
-        cmd_ptr->cmd = 0x25;    // read command
+        cmd_ptr->cmd = AHCI_READ_CMD;
     }
     cmd_ptr->c = 1;             // command
     cmd_ptr->type = FIS_TYPE_REG_H2D;
@@ -220,6 +243,24 @@ static bool send_rw_cmd(uint64_t lba, uint16_t sector_count, void* buffer, bool 
     cmd_ptr->counth = (sector_count >> 8) & 0xff;
 
     send_cmd(dev->port, cmd_slot);
+
+    // TODO: detect error
+
+    return rest_sectors;
+}
+
+static bool send_rw_cmds(uint64_t lba, uint64_t sector_count, uint64_t buffer, bool write, ahci_dev_t* dev) {
+    uint64_t rest_sectors = send_rw_cmd(lba, sector_count, buffer, write, dev);
+
+    while (rest_sectors != 0) {
+        kprintln("next rw cmd");
+
+        lba += (uint64_t)MAX_PRDTS * BYTES_PER_PRDT / AHCI_SECTOR_SIZE;
+        buffer += (uint64_t)MAX_PRDTS * BYTES_PER_PRDT;
+
+        rest_sectors = send_rw_cmd(lba, rest_sectors, buffer, write, dev);
+    }
+
     return true;
 }
 
@@ -260,6 +301,8 @@ static ahci_dev_t init_ahci_dev(uint32_t cmd_slots, ahci_port_regs_t* port) {
         model_num[i*2+1] = (uint8_t) (ident[27+i] & 0xff);
         model_num[i*2] = (uint8_t) (ident[27+i] >> 8) & 0xff;
     }
+
+    pmm_free(to_frame((uint64_t)ident), 1);
 
     kprintln("ahci dev serial number: %s", serial_num);
     kprintln("ahci dev firmware: %s", firmware);
@@ -404,49 +447,64 @@ void init_ahci(void) {
     }
 }
 
-uint64_t ahci_read(uint64_t location, uint64_t count, void *buffer, ahci_dev_t* dev) {
-    // TODO: handle not AHCI_SECTOR_SIZE aligned location and sector_count
-    uint64_t lba = location / AHCI_SECTOR_SIZE;
-    uint64_t sector_count = count / AHCI_SECTOR_SIZE;
+uint64_t ahci_read(uint64_t start, uint64_t size, void* buffer, ahci_dev_t* dev) {
+    if (start + size >= dev->sector_count * AHCI_SECTOR_SIZE) {
+        size = dev->sector_count * AHCI_SECTOR_SIZE - start;
+    }
+    if (start % AHCI_SECTOR_SIZE != 0 || size % AHCI_SECTOR_SIZE != 0) {
+        kprintln("AHCI read ERROR: start and size have to be multiple of sector size");
+        return 0;
+    }
 
-    uint64_t buf_size = (count + FRAME_SIZE-1) & ~(FRAME_SIZE-1);
-    void* buf = pmm_alloc(buf_size);
+    uint64_t lba = start / AHCI_SECTOR_SIZE;
+    uint64_t sector_count = size / AHCI_SECTOR_SIZE;
 
-    if (!send_rw_cmd(lba, sector_count, buf, false, dev)) {
-        pmm_free(to_frame((uint64_t)buf), buf_size);
-        kprintln("ERROR: could not read from AHCI device");
+    uint64_t aligned_buf_size = (size + FRAME_SIZE-1) & ~(FRAME_SIZE-1);
+    void* aligned_buf = pmm_alloc(aligned_buf_size / FRAME_SIZE);
+
+    if (!send_rw_cmds(lba, sector_count, (uint64_t)aligned_buf, false, dev)) {
+        pmm_free(to_frame((uint64_t)aligned_buf), aligned_buf_size / FRAME_SIZE);
+        kprintln("AHCI read ERROR: error on sending commands");
         return 0;
     }
 
     // TODO: memcpy
-    for (uint64_t i = 0; i < count; i++) {
-        ((uint8_t*)buffer)[i] = ((uint8_t*)buf)[i];
+    for (uint64_t i = 0; i < size; i++) {
+        ((uint8_t*)buffer)[i] = ((uint8_t*)aligned_buf)[i];
     }
 
-    pmm_free(to_frame((uint64_t)buf), buf_size);
+    pmm_free(to_frame((uint64_t)aligned_buf), aligned_buf_size / FRAME_SIZE);
 
-    return count;
+    return size;
 }
 
-uint64_t ahci_write(uint64_t location, uint64_t count, void *buffer, ahci_dev_t* dev) {
-    uint64_t lba = location / AHCI_SECTOR_SIZE;
-    uint64_t sector_count = count / AHCI_SECTOR_SIZE;
-
-    uint64_t buf_size = (count + FRAME_SIZE-1) & ~(FRAME_SIZE-1);
-    void* buf = pmm_alloc(buf_size);
-
-    // TODO: memcpy
-    for (uint64_t i = 0; i < count; i++) {
-        ((uint8_t*)buf)[i] = ((uint8_t*)buffer)[i];
+uint64_t ahci_write(uint64_t start, uint64_t size, void *buffer, ahci_dev_t* dev) {
+    if (start + size >= dev->sector_count * AHCI_SECTOR_SIZE) {
+        size = dev->sector_count * AHCI_SECTOR_SIZE - start;
     }
-
-    if (!send_rw_cmd(lba, sector_count, buf, true, dev)) {
-        pmm_free(to_frame((uint64_t)buf), buf_size);
-        kprintln("ERROR: could not write to AHCI device");
+    if (start % AHCI_SECTOR_SIZE != 0 || size % AHCI_SECTOR_SIZE != 0) {
+        kprintln("AHCI write ERROR: start and size have to be multiple of sector size");
         return 0;
     }
 
-    pmm_free(to_frame((uint64_t)buf), buf_size);
+    uint64_t lba = start / AHCI_SECTOR_SIZE;
+    uint64_t sector_count = size / AHCI_SECTOR_SIZE;
 
-    return count;
+    uint64_t aligned_buf_size = (size + FRAME_SIZE-1) & ~(FRAME_SIZE-1);
+    void* aligned_buf = pmm_alloc(aligned_buf_size);
+
+    // TODO: memcpy
+    for (uint64_t i = 0; i < size; i++) {
+        ((uint8_t*)aligned_buf)[i] = ((uint8_t*)buffer)[i];
+    }
+
+    if (!send_rw_cmds(lba, sector_count, (uint64_t)aligned_buf, true, dev)) {
+        pmm_free(to_frame((uint64_t)aligned_buf), aligned_buf_size);
+        kprintln("AHCI write ERROR: error on sending commands");
+        return 0;
+    }
+
+    pmm_free(to_frame((uint64_t)aligned_buf), aligned_buf_size);
+
+    return size;
 }
