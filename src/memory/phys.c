@@ -224,7 +224,9 @@ void* pmm_alloc_unmapped(uint64_t count) {
 
 void* pmm_alloc(uint64_t count) {
     void* addr = pmm_alloc_unmapped(count);
-    map_frame(to_frame((uint64_t)addr), to_page((uint64_t)addr), Present | Writeable);
+    for (uint64_t i = 0; i < count; i++) {
+        map_frame(to_frame((uint64_t)addr + i*PAGE_SIZE), to_page((uint64_t)addr + i*PAGE_SIZE), Present | Writeable);
+    }
     return addr;
 }
 
