@@ -17,7 +17,7 @@
   * [ ] Paging
   * [ ] mapping
 * [ ] drivers
-  * [ ] AHCI
+  * [x] AHCI
   * [ ] XHCI
   * [ ] NVMe
 * [x] Interrupts
