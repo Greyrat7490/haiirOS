@@ -1,5 +1,5 @@
 #include "pci.h"
-#include "interrupt/ISR/isr.h"
+#include "interrupt/asm.h"
 #include "io/io.h"
 
 #define PIC_CONFIG_ADDR_PORT 0xcf8
@@ -101,6 +101,7 @@ pci_bar_t get_bar(pci_dev_t* dev, uint8_t bar) {
     return (pci_bar_t) {
         .base = base,
         .size = size,
+        .is_64bits = is_64bits,
         .is_mmio = is_mmio,
         .is_prefetchable = is_prefetchable
     };
@@ -139,6 +140,44 @@ static void check_bus(uint8_t bus) {
             }
         }
     }
+}
+
+static uint8_t find_cap(pci_dev_t* dev, uint8_t id) {
+    uint8_t cap_offset = pci_readw(dev->bus, dev->slot, dev->func, 0x34) & 0xfc; // bottom 2bits are reserved
+
+    uint8_t cur_id = pci_readw(dev->bus, dev->slot, dev->func, cap_offset) & 0xff;
+    while (cur_id != id) {
+        cap_offset = pci_readw(dev->bus, dev->slot, dev->func, cap_offset) >> 8;
+        if (cap_offset == 0) { return 0; }
+
+        cur_id = pci_readw(dev->bus, dev->slot, dev->func, cap_offset) & 0xff;
+    }
+
+    return cap_offset;
+}
+
+uint8_t pci_msi_vec_count(pci_dev_t* dev) {
+    if ((pci_readw(dev->bus, dev->slot, dev->func, 0x6) & (1 << 4)) == 0) {
+        kprintln("ERROR: capabilities bit is not set");
+        return 0xff;
+    }
+
+    uint8_t msi_cap_offset = find_cap(dev, 0x5);
+    kprintln("msi_cap_offset: %d", msi_cap_offset);
+    if (msi_cap_offset == 0) {
+        kprintln("ERROR: could not find msi capabilities");
+        return 0xff;
+    }
+
+    uint16_t msi_cap = pci_readw(dev->bus, dev->slot, dev->func, msi_cap_offset);
+    return 1 << ((msi_cap >> 1) & 7);
+}
+
+bool pci_enable_msi(pci_dev_t* dev) {
+    uint8_t msi_vec_count = pci_msi_vec_count(dev);
+    kprintln("vec count: %d", msi_vec_count);
+
+    return false;
 }
 
 void init_pci(void) {

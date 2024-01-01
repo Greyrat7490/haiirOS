@@ -3,7 +3,6 @@
 #include "types.h"
 #include "io/io.h"
 
-#include "interrupt/ISR/isr.h"
 #include "interrupt/idt.h"
 
 
@@ -285,7 +284,4 @@ void init_exceptions(void) {
     init_gate(17, (uint64_t) exc17, CODE_SEG, GATE_PRESENT | INTERRUPT_GATE, IST_NONE);
     init_gate(18, (uint64_t) exc18, CODE_SEG, GATE_PRESENT | INTERRUPT_GATE, IST_NONE);
     init_gate(19, (uint64_t) exc19, CODE_SEG, GATE_PRESENT | INTERRUPT_GATE, IST_NONE);
-
-    for (uint64_t i = 20; i < 31; i++)
-        init_gate(i, (uint64_t) interrupt_handler, CODE_SEG, GATE_PRESENT | INTERRUPT_GATE, IST_NONE);
 }

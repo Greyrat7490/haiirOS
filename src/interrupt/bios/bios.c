@@ -1,6 +1,5 @@
 #include "bios.h"
-#include "io/io.h"
-#include "interrupt/idt.h"
+#include "interrupt/pic/pic.h"
 
 extern void bios_service_wrapped(uint32_t service_num, uint32_t args);
 void* bios_service;

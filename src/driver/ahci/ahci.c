@@ -1,14 +1,10 @@
 #include "ahci.h"
+#include "interrupt/asm.h"
 #include "io/io.h"
 #include "pci/pci.h"
 #include "memory/phys.h"
 #include "memory/paging.h"
-#include "interrupt/ISR/isr.h"
 
-#define AHCI_PROG_IF 1
-#define STORAGE_CLASS 0x1
-#define AHCI_SUBCLASS 0x6
-#define RAID_SUBCLASS 0x4
 
 #define SATA_SIG_ATA    0x101
 #define SATA_SIG_ATAPI  0xeb140101
@@ -321,10 +317,10 @@ static ahci_dev_t init_ahci_dev(uint32_t cmd_slots, ahci_port_regs_t* port) {
 }
 
 static bool init_ahci_controller(pci_dev_t* dev) {
-    uint32_t cmd = pci_readd(dev->bus, dev->slot, dev->func, 0x4);
-    if ((cmd & (1 << 2)) == 0) {
-        cmd = pci_readd(dev->bus, dev->slot, dev->func, 0x4);
-        pci_writed(dev->bus, dev->slot, dev->func, 0x4, cmd | (1 << 2));
+    uint32_t cmd = pci_readd(dev->bus, dev->slot, dev->func, PCI_COMMAND_OFFSET);
+    if ((cmd & PCI_CMD_MASTER) == 0) {
+        cmd |= PCI_CMD_MASTER;
+        pci_writed(dev->bus, dev->slot, dev->func, PCI_COMMAND_OFFSET, cmd);
     }
 
     if (!is_bar_present(dev, 5)) {

@@ -3,6 +3,24 @@
 
 #include "types.h"
 
+#define STORAGE_CLASS 0x1
+#define SERIAL_BUS_CLASS 0xc
+
+#define AHCI_SUBCLASS 0x6
+#define USB_SUBCLASS 0x3
+#define RAID_SUBCLASS 0x4
+
+#define AHCI_PROG_IF 1
+#define XHCI_PROG_IF 0x30
+
+#define PCI_COMMAND_OFFSET 0x4
+
+#define PCI_CMD_MASTER      (1 << 2)
+#define PCI_CMD_MEMORY      (1 << 1)
+#define PCI_CMD_IO          (1 << 0)
+#define PCI_CMD_INT_DISABLE (1 << 10)
+
+
 typedef struct {
     uint8_t bus;
     uint8_t slot;
@@ -15,6 +33,7 @@ typedef struct {
 typedef struct {
     uint64_t base;
     uint64_t size;
+    bool is_64bits;
     bool is_prefetchable;
     bool is_mmio;
 } pci_bar_t;
@@ -30,5 +49,7 @@ pci_bar_t get_bar(pci_dev_t* dev, uint8_t bar);
 
 pci_dev_t* get_pci_devs(void);
 uint32_t get_pci_devs_len(void);
+
+uint8_t pci_msi_vec_count(pci_dev_t* dev);
 
 #endif // PCI_H_

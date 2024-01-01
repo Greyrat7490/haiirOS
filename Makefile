@@ -37,16 +37,16 @@ build-debug: CFLAGS += -ggdb -Og -D DEBUG
 build-debug: $(debug_img)
 
 run: release
-	qemu-system-x86_64 -M q35 -drive if=none,id=stick,format=raw,file=$(release_img) -device nec-usb-xhci,id=xhci -device usb-storage,bus=xhci.0,drive=stick
+	qemu-system-x86_64 -M q35 -smp 8 -drive if=none,id=stick,format=raw,file=$(release_img) -device nec-usb-xhci,id=xhci -device usb-storage,bus=xhci.0,drive=stick
 
 debug: build-debug
-	qemu-system-x86_64 -M q35 -s -S -drive format=raw,file=$(debug_img)
+	qemu-system-x86_64 -M q35 -smp 8 -s -S -drive format=raw,file=$(debug_img)
 
 monitor: build-debug
-	qemu-system-x86_64 -M q35 -drive if=none,id=stick,format=raw,file=$(debug_img) -device nec-usb-xhci,id=xhci -device usb-storage,bus=xhci.0,drive=stick -no-reboot -no-shutdown -monitor stdio
+	qemu-system-x86_64 -M q35 -smp 8 -drive if=none,id=stick,format=raw,file=$(debug_img) -device nec-usb-xhci,id=xhci -device usb-storage,bus=xhci.0,drive=stick -no-reboot -no-shutdown -monitor stdio
 
 test-ahci: build-debug
-	qemu-system-x86_64 -M q35 -drive format=raw,file=$(debug_img) -no-reboot -no-shutdown -monitor stdio
+	qemu-system-x86_64 -M q35 -smp 8 -drive format=raw,file=$(debug_img) -no-reboot -no-shutdown -monitor stdio
 
 $(bloader_img):
 	mkdir build -p

@@ -1,3 +1,5 @@
+#include "boot/acpi.h"
+#include "driver/xhci/xhci.h"
 #include "types.h"
 #include "io/io.h"
 #include "proc/task.h"
@@ -10,22 +12,26 @@
 #include "example_tasks/err_task1.h"
 #include "example_tasks/simple.h"
 
-//#define WRITE_TEST
-//#define VBE_TEST
+// #define WRITE_TEST
+// #define VBE_TEST
 
 void kernel_main(bloader_boot_info_t* boot_info) {
     kclear_screen();
     kset_color(BLACK, PINK);
     kprintln("%s to %s!", "Welcome", "haiirOS");
 
-    // interrupts, exceptions ---------------------------
     init_bios_services(boot_info);
-    select_keyboard_layout(QWERTZ_LAYOUT);
-    init_idt();
-    // --------------------------------------------------
 
     // memory --------------------------------------------
     init_memory(boot_info);
+    // --------------------------------------------------
+
+    init_acpi(boot_info);
+
+    // interrupts, exceptions ---------------------------
+    select_keyboard_layout(QWERTZ_LAYOUT);
+    init_interrupts();
+    while(1) __asm__("hlt");
     // --------------------------------------------------
 
     // tests --------------------------------------------
@@ -37,6 +43,9 @@ void kernel_main(bloader_boot_info_t* boot_info) {
     // PCI and drivers ----------------------------------
     init_pci();
     init_ahci();
+    init_xhci();
+
+    while(1) __asm__("hlt");
 
     ahci_dev_t* ahci_dev = get_ahci_dev(0, 0);
     if (ahci_dev != 0x0) {

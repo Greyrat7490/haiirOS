@@ -1,37 +1,7 @@
-#ifndef H_ISR
-#define H_ISR
+#ifndef INTERRUPT_ASM_H_
+#define INTERRUPT_ASM_H_
 
 #include "types.h"
-
-#define CODE_SEG 0x08
-
-#define IST_NONE 0
-#define IST_NO_MASKABLE_INT 1
-#define IST_DOUBLE_FAULT 2
-
-#define INTERRUPT_GATE  0xe
-#define TRAP_GATE 0xf
-#define TASK_GATE 0x5
-
-#define DPL_KERNEL 0 // Descriptor Privilege Level (DPL)
-#define GATE_PRESENT 1 << 7
-
-
-struct interrupt_frame {
-    uint64_t rip;
-    uint64_t cs;
-    uint64_t rflags;
-    uint64_t rsp;
-    uint64_t ss;
-};
-
-
-__attribute__((interrupt))
-void interrupt_handler(struct interrupt_frame* frame);
-
-__attribute__((interrupt))
-void interrupt_handler_err_code(struct interrupt_frame* frame, uint64_t err_code);
-
 
 static inline void outb(uint16_t port, uint8_t value) {
     __asm__ volatile ("outb %0, %1" : : "a"(value), "Nd"(port));
@@ -71,4 +41,17 @@ static inline void io_wait(void) {  // wait ~1-4µs
     outb(0x80, 0); // port 0x80 is unused
 }
 
-#endif // H_ISR
+static inline uint64_t read_msr(uint32_t id) {
+    uint64_t high, low;
+    __asm__ volatile("rdmsr" : "=a" (low), "=d" (high) : "c" (id));
+	return (high << 32) | low;
+}
+
+static inline void write_msr(uint32_t id, uint64_t value) {
+    uint32_t low = value;
+    uint32_t high = value >> 32;
+    __asm__ volatile ("wrmsr" : : "c" (id), "a" (low), "d" (high));
+}
+
+
+#endif // !INTERRUPT_ASM_H_
