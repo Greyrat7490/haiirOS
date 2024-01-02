@@ -23,7 +23,7 @@
 
 #define ISA_INTERRUPT_COUNT 0x10
 #define INTERRUPT_BASE 0x20
-#define VECTOR_COUNT (256 - INTERRUPT_BASE)
+#define IO_VECTOR_COUNT (256 - INTERRUPT_BASE)
 
 void init_apic(void);
 void apic_eoi(void);

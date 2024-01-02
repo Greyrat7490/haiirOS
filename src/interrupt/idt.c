@@ -50,6 +50,7 @@ void init_interrupts(void) {
         disable_pic();
         init_apic();
     } else {
+        kprintln("WARNING: could not detect APIC (using PIC instead)");
         init_pic();
     }
 

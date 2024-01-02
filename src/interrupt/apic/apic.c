@@ -29,17 +29,58 @@ static void init_lvt_lints(void) {
 static void init_lvt_err(void) {
     uint32_t config = *(volatile uint32_t*)(apic_base+APIC_ERR_REG) & 0xffffff00;
     *(volatile uint32_t*)(apic_base+APIC_ERR_REG) |= config | 0xfe;
+    reserve_io_interrupt(0xfe - INTERRUPT_BASE);
 }
 
 static void init_spurious_interrupts(void) {
     uint32_t config = *(volatile uint32_t*)(apic_base+APIC_SVR) & 0xffffff00;
     config |= APIC_ENABLE | 0xff;
     *(volatile uint32_t*)(apic_base+APIC_SVR) = config;
+    reserve_io_interrupt(0xff - INTERRUPT_BASE);
+}
+
+static int32_t debug_timer_handler(void* data) {
+    (void)data;
+    kprintf(".");
+    return 0;
+}
+
+static int32_t debug_keyboard_handler(void* data) {
+    (void)data;
+    static uint8_t seq = 0;
+
+    int scancode = inb(0x60);
+    enum keystate state;
+
+    if (scancode == 0xe0)
+        seq = 1;
+    else {
+        if(scancode > 0x80)
+            state = KEY_RELEASED;
+        else
+            state = KEY_PRESSED;
+
+        if(seq == 1) {
+            scancode += 0x80;
+            seq = 0;
+        }
+
+        if (state == KEY_PRESSED) {
+            kset_color(BLACK, CYAN);
+            kprintf("%c", scancode_to_ascii(scancode));
+        }
+    }
+
+    return 0;
 }
 
 uint8_t get_local_apic_id(void) {
     // P6 family and Pentium processors only have 4bits
     return *(volatile uint32_t*)(apic_base+APIC_ID) >> APIC_ID_OFFSET;
+}
+
+void apic_eoi(void) {
+    *(volatile uint32_t*)(apic_base+APIC_EOI) = 0;
 }
 
 void show_local_apics(void) {
@@ -73,14 +114,13 @@ void init_apic(void) {
 
     map_frame(to_page(apic_base), to_frame(apic_base), Present | Writeable | DisableCache);
 
+    init_io_apics();
+
     init_spurious_interrupts();
     init_timer();
     init_lvt_err();
     init_lvt_lints();
 
-    init_io_apic();
-}
-
-void apic_eoi(void) {
-    *(volatile uint32_t*)(apic_base+APIC_EOI) = 0;
+    install_io_interrupt_handler(0, debug_timer_handler, 0x0);
+    install_io_interrupt_handler(1, debug_keyboard_handler, 0x0);
 }

@@ -1,6 +1,9 @@
 #ifndef IO_APIC_H_
 #define IO_APIC_H_
 
+#include "types.h"
+#include "interrupt/apic/irq.h"
+
 #define IOAPICID_OFFSET 0x0
 #define IOAPICVER_OFFSET 0x1
 #define IOAPICARB_OFFSET 0x2
@@ -43,6 +46,36 @@
 #define IOAPIC_OVERRIDE_TRIGGER_EDGE 0
 #define IOAPIC_OVERRIDE_TRIGGER_LEVEL 3
 
-void init_io_apic(void);
+#define MAX_IOAPICS 0xff
+
+typedef struct {
+    uint32_t addr;
+    uint32_t gsi_base;
+    uint8_t id;
+    uint8_t max_entries;
+    uint8_t version;
+} ioapic_t;
+
+
+typedef struct {
+    interrupt_handler_t func;
+    void* data;
+    uint8_t vector;
+} io_handler_t;
+
+
+void init_io_apics(void);
+
+int32_t install_io_interrupt_handler(uint8_t vector, interrupt_handler_t handler, void* data);
+int32_t remove_io_interrupt_handler(uint8_t vector);
+void reserve_io_interrupt(uint8_t gsi);
+void free_io_interrupt(uint8_t gsi);
+void enable_io_interrupt(uint8_t gsi);
+void disable_io_interrupt(uint8_t gsi);
+int32_t alloc_io_interrupts(uint8_t count, uint8_t* firstVector);
+
+ioapic_t* get_io_apic(uint8_t gsi);
+
+int32_t exec_io_handler(uint8_t vector);
 
 #endif // IO_APIC_H_
