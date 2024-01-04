@@ -1,7 +1,7 @@
 #ifndef H_ERR_TASK
 #define H_ERR_TASK
 
-#include "syscall.h"
+#include "syscall/syscall.h"
 
 void err_task(void) {
     write(0, "test1");
