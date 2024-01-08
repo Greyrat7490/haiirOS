@@ -169,9 +169,9 @@ static void* pmm_alloc_unmapped_(uint64_t count) {
                         last_idx = i;
                         last_idx_bit = j;
 
-                        void* addr = (void*)((i*BITMAP_BLOCK_SIZE + j - continues_frames + 1) * FRAME_SIZE);
-                        reserve_frames((uint64_t)addr, continues_frames * FRAME_SIZE);
-                        return addr;
+                        uint64_t addr = (i*BITMAP_BLOCK_SIZE + j - continues_frames) * FRAME_SIZE;
+                        reserve_frames(addr, continues_frames * FRAME_SIZE);
+                        return (void*)addr;
                     }
                 } else {
                     continues_frames = 0;
@@ -223,9 +223,13 @@ void* pmm_alloc_unmapped(uint64_t count) {
 }
 
 void* pmm_alloc(uint64_t count) {
+    return pmm_alloc_custom(count, Present | Writeable | DisableCache);
+}
+
+void* pmm_alloc_custom(uint64_t count, uint64_t flags) {
     void* addr = pmm_alloc_unmapped(count);
     for (uint64_t i = 0; i < count; i++) {
-        map_frame(to_frame((uint64_t)addr + i*PAGE_SIZE), to_page((uint64_t)addr + i*PAGE_SIZE), Present | Writeable);
+        map_frame(to_frame((uint64_t)addr + i*PAGE_SIZE), to_page((uint64_t)addr + i*PAGE_SIZE), flags);
     }
     return addr;
 }

@@ -17,6 +17,7 @@ void init_pmm(memory_info_t* memory_info);
 
 void* pmm_alloc_unmapped(uint64_t count);
 void* pmm_alloc(uint64_t count);
+void* pmm_alloc_custom(uint64_t count, uint64_t flags);
 void pmm_free(frame_t first_frame, uint64_t count);
 bool pmm_is_free(uint64_t addr);
 
