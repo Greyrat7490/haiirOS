@@ -6,7 +6,7 @@
 
 #define BOOT_SECTION_SIZE (8*1024*1024)   // reserve first 8MiB for bootloader and tmp frames
 
-#define BITMAP_BLOCK_SIZE sizeof(uint8_t)
+#define BITMAP_BLOCK_SIZE 8
 
 #define TMP_BITMAP_BASE 0x3f0000
 #define TMP_BITMAP_SIZE (TMP_BITMAP_LAST_FRAME / FRAME_SIZE / BITMAP_BLOCK_SIZE - 1)
@@ -28,18 +28,23 @@ static void reserve_frames(uint64_t start_addr, uint64_t size) {
     uint32_t offset = start_addr / FRAME_SIZE % BITMAP_BLOCK_SIZE;
 
     uint32_t end_block = start_block + blocks;
-    for (uint32_t i = start_block; i < end_block; i++) {
-        bitmap[i] = 0xff >> offset;
-    }
 
     if (blocks != 0) {
-        bitmap[end_block] |= 0xff << (BITMAP_BLOCK_SIZE-offset);
+        bitmap[start_block] |= 0xff >> offset;
+        for (uint32_t i = start_block+1; i < end_block; i++) {
+            bitmap[i] = 0xff;
+        }
+        if (blocks > 1) {
+            bitmap[end_block] |= 0xff << (BITMAP_BLOCK_SIZE-offset);
+        }
     }
 
     uint8_t rest = pages % BITMAP_BLOCK_SIZE;
     if (rest != 0) {
-        uint8_t bits = 0xff << (BITMAP_BLOCK_SIZE - rest);
-        bitmap[end_block]   |= bits >> offset;
+        uint8_t bits = 0xff >> (BITMAP_BLOCK_SIZE-rest);
+        bits <<= (BITMAP_BLOCK_SIZE-rest);
+
+        bitmap[end_block] |= bits >> offset;
         bitmap[end_block+1] |= bits << (BITMAP_BLOCK_SIZE-offset);
     }
 }
@@ -54,19 +59,24 @@ static void free_frames(uint64_t start_addr, uint64_t size) {
     uint32_t offset = start_addr / FRAME_SIZE % BITMAP_BLOCK_SIZE;
 
     uint32_t end_block = start_block + blocks;
-    for (uint32_t i = start_block; i < end_block; i++) {
-        bitmap[i] = ~(0xff >> offset);
-    }
 
     if (blocks != 0) {
-        bitmap[end_block] &= ~(0xff << (BITMAP_BLOCK_SIZE-offset));
+        bitmap[start_block] &= ~(0xff >> offset);
+        for (uint32_t i = start_block+1; i < end_block; i++) {
+            bitmap[i] = 0;
+        }
+        if (blocks > 1) {
+            bitmap[end_block] &= ~(0xff << (BITMAP_BLOCK_SIZE-offset));
+        }
     }
 
     uint8_t rest = pages % BITMAP_BLOCK_SIZE;
     if (rest != 0) {
-        uint8_t bits = ~(0xff << (BITMAP_BLOCK_SIZE - rest));
-        bitmap[end_block]   &= bits >> offset;
-        bitmap[end_block+1] &= bits << (BITMAP_BLOCK_SIZE-offset);
+        uint8_t bits = 0xff >> (BITMAP_BLOCK_SIZE-rest);
+        bits <<= (BITMAP_BLOCK_SIZE-rest);
+
+        bitmap[end_block] &= ~(bits >> offset);
+        bitmap[end_block+1] &= ~(bits << (BITMAP_BLOCK_SIZE-offset));
     }
 }
 
@@ -75,12 +85,12 @@ static void print_bitmap_block(uint8_t* last_val, uint64_t* size, uint64_t* base
 
     // no rest in the block
     if (block == 0xff) {
-        kprintln("free: %x %x", *base, *base + *size);
+        kprintln("free: %x %x", *base, *base + *size -1);
         *last_val = ~*last_val;
         *base += *size;
         *size = BITMAP_BLOCK_SIZE*FRAME_SIZE;
     } else if (block == 0) {
-        kprintln("used: %x %x", *base, *base + *size);
+        kprintln("used: %x %x", *base, *base + *size -1);
         *last_val = ~*last_val;
         *base += *size;
         *size = BITMAP_BLOCK_SIZE*FRAME_SIZE;
@@ -91,9 +101,9 @@ static void print_bitmap_block(uint8_t* last_val, uint64_t* size, uint64_t* base
             uint8_t b = (block >> i) & 1;
             if (((*last_val) & 1) != b) {
                 if (b == 1) {
-                    kprintln("free: %x %x", *base, *base + *size);
+                    kprintln("free: %x %x", *base, *base + *size -1);
                 } else {
-                    kprintln("used: %x %x", *base, *base + *size);
+                    kprintln("used: %x %x", *base, *base + *size -1);
                 }
 
                 *last_val = ~*last_val;
@@ -163,13 +173,13 @@ static void* pmm_alloc_unmapped_(uint64_t count) {
         uint8_t b = bitmap[i];
         if (b != 0xff) {
             for (int8_t j = last_idx_bit; j >= 0; j--) {
-                if ((b >> j) == 0) {
+                if (((b >> j) & 1) == 0) {
                     continues_frames++;
                     if (continues_frames >= count) {
                         last_idx = i;
                         last_idx_bit = j;
 
-                        uint64_t addr = (i*BITMAP_BLOCK_SIZE + j - continues_frames) * FRAME_SIZE;
+                        uint64_t addr = (i*BITMAP_BLOCK_SIZE + (BITMAP_BLOCK_SIZE-j) - continues_frames) * FRAME_SIZE;
                         reserve_frames(addr, continues_frames * FRAME_SIZE);
                         return (void*)addr;
                     }
@@ -206,7 +216,7 @@ void init_pmm(memory_info_t* memory_info) {
 bool pmm_is_free(uint64_t addr) {
     uint32_t block = addr / FRAME_SIZE / BITMAP_BLOCK_SIZE;
     uint32_t offset = addr / FRAME_SIZE % BITMAP_BLOCK_SIZE;
-    return (bitmap[block] >> offset) == 0;
+    return ((bitmap[block] >> (BITMAP_BLOCK_SIZE-offset-1)) & 1) == 0;
 }
 
 // return addr to count continues frames and reserves them in bitmap
@@ -223,7 +233,7 @@ void* pmm_alloc_unmapped(uint64_t count) {
 }
 
 void* pmm_alloc(uint64_t count) {
-    return pmm_alloc_custom(count, Present | Writeable | DisableCache);
+    return pmm_alloc_custom(count, Present | Writeable);
 }
 
 void* pmm_alloc_custom(uint64_t count, uint64_t flags) {
@@ -262,8 +272,8 @@ void print_frame_map(void) {
     }
 
     if (last_val == 0) {
-        kprintln("free: %x %x", base, base + size + FRAME_SIZE);
+        kprintln("free: %x %x", base, base + size + FRAME_SIZE-1);
     } else {
-        kprintln("used: %x %x", base, base + size + FRAME_SIZE);
+        kprintln("used: %x %x", base, base + size + FRAME_SIZE-1);
     }
 }

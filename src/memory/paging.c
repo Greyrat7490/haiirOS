@@ -106,15 +106,17 @@ static void* valid_pointer(void* pointer) {
 static uint64_t* get_table_from_entry(uint64_t* entry, PageFlags new_table_flags) {
     entry = (uint64_t*) valid_pointer(entry);
 
-    uint64_t* table = (uint64_t*) (*entry & ~0xfff);
-    if (!is_entry_present(entry)) {
-        if ((uint64_t)table == 0 || pmm_is_free((uint64_t)table)) {
-            if (new_table_flags != (uint64_t)-1) {
-                return create_table(entry, new_table_flags);
-            } else {
-                return 0x0;
-            }
+    uint64_t* table = (uint64_t*) (*entry & ~0xfffull);
+    if ((uint64_t)table == 0 || pmm_is_free((uint64_t)table)) {
+        if (new_table_flags != (uint64_t)-1) {
+            return create_table(entry, new_table_flags);
+        } else {
+            return 0x0;
         }
+    }
+
+    if (!is_entry_present(entry) && new_table_flags != (uint64_t)-1) {
+        *entry |= new_table_flags;
     }
 
     return valid_pointer(table);
@@ -293,6 +295,14 @@ void show_entries(uint16_t ptEntries, uint16_t ptTables) {
 // 0xfffffff000 -> 0xfff000
 void test_mapping(void) {
     kclear_screen();
+    print_frame_map();
+
+    uint64_t a = (uint64_t)pmm_alloc(2);
+    uint64_t b = (uint64_t)pmm_alloc(2);
+    uint64_t c = (uint64_t)pmm_alloc(2);
+    kprintln("a: %x, b: %x, c: %x", a, b, c);
+    print_frame_map();
+
     // test how much is mapped (should be 8MiB)
     kprintln("%x is present = %b", 0x7fffff, is_addr_present(0x7fffff));
     kprintln("%x is present = %b", 0x800000, is_addr_present(0x800000));
