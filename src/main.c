@@ -1,5 +1,6 @@
 #include "boot/acpi.h"
 #include "driver/xhci/xhci.h"
+#include "memory/paging.h"
 #include "types.h"
 #include "io/io.h"
 #include "proc/task.h"
@@ -31,7 +32,6 @@ void kernel_main(bloader_boot_info_t* boot_info) {
     // interrupts, exceptions ---------------------------
     select_keyboard_layout(QWERTZ_LAYOUT);
     init_interrupts();
-    while(1) __asm__("hlt");
     // --------------------------------------------------
 
     // tests --------------------------------------------
@@ -42,7 +42,7 @@ void kernel_main(bloader_boot_info_t* boot_info) {
 
     // PCI and drivers ----------------------------------
     init_pci();
-    init_ahci();
+    // init_ahci();
     init_xhci();
 
     while(1) __asm__("hlt");

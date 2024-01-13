@@ -121,6 +121,6 @@ void init_apic(void) {
     init_lvt_err();
     init_lvt_lints();
 
-    install_io_interrupt_handler(0, debug_timer_handler, 0x0);
+    // install_io_interrupt_handler(0, debug_timer_handler, 0x0);
     install_io_interrupt_handler(1, debug_keyboard_handler, 0x0);
 }
