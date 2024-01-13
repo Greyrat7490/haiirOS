@@ -40,7 +40,7 @@ run: release
 	qemu-system-x86_64 -M q35 -smp 8 -drive if=none,id=stick,format=raw,file=$(release_img) -device nec-usb-xhci,id=xhci -device usb-storage,bus=xhci.0,drive=stick
 
 debug: build-debug
-	qemu-system-x86_64 -M q35 -smp 8 -s -S -drive format=raw,file=$(debug_img)
+	qemu-system-x86_64 -M q35 -smp 8 -s -S -drive if=none,id=stick,format=raw,file=$(debug_img) -device nec-usb-xhci,id=xhci -device usb-storage,bus=xhci.0,drive=stick
 
 monitor: build-debug
 	qemu-system-x86_64 -M q35 -smp 8 -drive if=none,id=stick,format=raw,file=$(debug_img) -device nec-usb-xhci,id=xhci -device usb-storage,bus=xhci.0,drive=stick -no-reboot -no-shutdown -monitor stdio
